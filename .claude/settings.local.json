@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "WebSearch",
+      "WebFetch(domain:api2-developer.avinor.no)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:avinor.no)",
+      "WebFetch(domain:m.avinor.no)",
+      "WebFetch(domain:www.avinor.no)",
+      "Bash(npm install)",
+      "Bash(npx playwright install chromium)",
+      "Bash(npm run dev:backend:*)",
+      "Bash(npm run dev:*)",
+      "Bash(cat:*)"
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "oslo-queue-backend",
+  "version": "0.1.0",
+  "description": "Backend service for Oslo Airport queue monitoring",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "cors": "^2.8.5",
+    "playwright": "^1.49.1",
+    "ws": "^8.18.0",
+    "web-push": "^3.6.7",
+    "dotenv": "^16.4.7"
+  }
+}
