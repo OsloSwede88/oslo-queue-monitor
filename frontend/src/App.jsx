@@ -9,12 +9,26 @@ function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [error, setError] = useState(null);
+  const [theme, setTheme] = useState(() => {
+    // Get theme from localStorage or default to 'dark'
+    return localStorage.getItem('theme') || 'dark';
+  });
   const wsRef = useRef(null);
 
   // Detect iOS
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
                        window.navigator.standalone === true;
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prevTheme => prevTheme === 'dark' ? 'light' : 'dark');
+  };
 
   // Connect to WebSocket
   useEffect(() => {
@@ -130,9 +144,22 @@ function App() {
       <header className="header">
         <div className="header-content">
           <h1>✈️ Oslo Airport Queue</h1>
-          <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-            <span className="status-dot"></span>
-            {isConnected ? 'Connected' : 'Connecting...'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button
+              className={`theme-toggle ${theme}`}
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+            >
+              <div className="theme-toggle-slider">
+                <span className="theme-toggle-icon">
+                  {theme === 'dark' ? '🌙' : '☀️'}
+                </span>
+              </div>
+            </button>
+            <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+              <span className="status-dot"></span>
+              {isConnected ? 'Connected' : 'Connecting...'}
+            </div>
           </div>
         </div>
       </header>
