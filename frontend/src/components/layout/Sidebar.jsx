@@ -41,14 +41,6 @@ function Sidebar({ isOpen, onClose, currentView, onNavigate, theme, onThemeToggl
             <span className="nav-label">Flight Tracker</span>
           </button>
 
-          <button
-            className={`nav-item ${currentView === 'queue' ? 'active' : ''}`}
-            onClick={() => handleNavigation('queue')}
-          >
-            <span className="nav-icon">⏱️</span>
-            <span className="nav-label">Oslo Queue</span>
-          </button>
-
           <div className="nav-divider"></div>
 
           {/* Theme Toggle in Sidebar */}
