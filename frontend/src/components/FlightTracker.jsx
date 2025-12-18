@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import './FlightTracker.css';
 import FlightTimeline from './flight/FlightTimeline';
+import FlightMap from './flight/FlightMap';
 
 function FlightTracker() {
   const [flightNumber, setFlightNumber] = useState('');
@@ -561,6 +562,21 @@ Keep it concise but informative, around 150-200 words.`;
 
   // Note: Flight subscription feature removed (backend deprecated)
 
+  // Handler for when a flight is selected from the map
+  const handleFlightSelectFromMap = (fr24Flight) => {
+    console.log('[handleFlightSelectFromMap] Selected flight from map:', fr24Flight);
+
+    // Extract flight number from FR24 data
+    const flightNum = fr24Flight.flight || fr24Flight.callsign;
+    if (flightNum) {
+      setFlightNumber(flightNum.trim());
+      // Trigger search with the selected flight
+      setTimeout(() => {
+        searchFlight();
+      }, 100);
+    }
+  };
+
   return (
     <div className="flight-tracker">
       <div className="container">
@@ -568,6 +584,9 @@ Keep it concise but informative, around 150-200 words.`;
           <h2>✈️ Flight Tracker</h2>
           <p>Track any flight in real-time</p>
         </div>
+
+        {/* Live Flight Map */}
+        <FlightMap onFlightSelect={handleFlightSelectFromMap} />
 
         <div className="flight-search glass glass-card">
         <div className="search-inputs">
@@ -585,6 +604,7 @@ Keep it concise but informative, around 150-200 words.`;
             value={flightDate}
             onChange={(e) => setFlightDate(e.target.value)}
             max={new Date().toISOString().split('T')[0]}
+            lang="en-US"
           />
         </div>
         <button

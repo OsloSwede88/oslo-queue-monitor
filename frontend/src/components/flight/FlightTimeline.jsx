@@ -108,6 +108,9 @@ function FlightTimeline({ flightData }) {
         <span className={`timeline-status status-${stage}`}>
           {isActive && <span className="live-dot"></span>}
           {getStatusLabel()}
+          {isActive && stage === 'enRoute' && (
+            <span className="progress-badge">{Math.round(progress)}%</span>
+          )}
         </span>
         <span className="timeline-eta text-secondary">
           {isActive
@@ -151,11 +154,6 @@ function FlightTimeline({ flightData }) {
             <div className="node-ring"></div>
             <div className="timeline-label">
               <span className="timeline-label-text">En Route</span>
-              {isActive && stage === 'enRoute' && (
-                <span className="timeline-time text-tertiary">
-                  {Math.round(progress)}%
-                </span>
-              )}
             </div>
           </div>
 

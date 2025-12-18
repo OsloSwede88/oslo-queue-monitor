@@ -31,6 +31,11 @@
   font-size: 0.875rem;
 }
 
+/* Flight Map Section */
+.flight-tracker .flight-map-container {
+  margin: 2rem 0;
+}
+
 /* Search Section */
 .flight-search {
   padding: 2rem;
@@ -66,17 +71,45 @@
   color: var(--color-text-tertiary);
 }
 
+/* Fix date input placeholder showing Norwegian characters */
+.flight-input[type="date"]::-webkit-datetime-edit-text,
+.flight-input[type="date"]::-webkit-datetime-edit-month-field,
+.flight-input[type="date"]::-webkit-datetime-edit-day-field,
+.flight-input[type="date"]::-webkit-datetime-edit-year-field {
+  color: var(--color-text-tertiary);
+}
+
+.flight-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+  cursor: pointer;
+}
+
 .search-btn {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary-color, #9D4EDD), var(--primary-dark, #7209B7));
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.search-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(157, 78, 221, 0.4);
 }
 
 .search-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 .spinner-small {
