@@ -541,3 +541,27 @@ body {
   font-size: 14px;
   line-height: 1;
 }
+
+/* Pull-to-Refresh */
+.ptr--ptr {
+  background: var(--color-surface) !important;
+  box-shadow: var(--shadow-md) !important;
+  border-radius: 0 0 0.5rem 0.5rem !important;
+  margin: 0 1rem !important;
+  color: var(--color-text-primary) !important;
+}
+
+.ptr--icon {
+  color: var(--color-primary) !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+}
+
+.ptr--text {
+  color: var(--color-text-secondary) !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  margin-top: 0.5rem !important;
+}

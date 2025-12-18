@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import './App.css';
+import 'pulltorefreshjs/dist/index.css';
 import FlightTracker from './components/FlightTracker';
+import PullToRefresh from 'pulltorefreshjs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const WS_URL = API_URL.replace('http://', 'ws://').replace('https://', 'wss://');
@@ -32,6 +34,21 @@ function App() {
     setTheme(prevTheme => prevTheme === 'dark' ? 'light' : 'dark');
   };
 
+  // Manual refresh handler for pull-to-refresh
+  const handleRefresh = () => {
+    return new Promise((resolve) => {
+      // Force a data refresh by requesting current data from server
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'request-update' }));
+      }
+
+      // Wait a bit for the update to come through
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+    });
+  };
+
   // Connect to WebSocket
   useEffect(() => {
     connectWebSocket();
@@ -40,6 +57,29 @@ function App() {
       if (wsRef.current) {
         wsRef.current.close();
       }
+    };
+  }, []);
+
+  // Initialize pull-to-refresh
+  useEffect(() => {
+    const ptr = PullToRefresh.init({
+      mainElement: '.main',
+      onRefresh: handleRefresh,
+      distThreshold: 60,
+      distMax: 80,
+      distReload: 50,
+      instructionsPullToRefresh: 'Pull down to refresh',
+      instructionsReleaseToRefresh: 'Release to refresh',
+      instructionsRefreshing: 'Refreshing...',
+      iconArrow: '↓',
+      iconRefreshing: '↻',
+      shouldPullToRefresh() {
+        return !window.scrollY;
+      }
+    });
+
+    return () => {
+      ptr.destroy();
     };
   }, []);
 
