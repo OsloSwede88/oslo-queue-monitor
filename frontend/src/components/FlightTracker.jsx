@@ -15,6 +15,7 @@ function FlightTracker() {
   const [aircraftInfo, setAircraftInfo] = useState(null);
   const [aircraftImage, setAircraftImage] = useState(null);
   const [loadingAircraftInfo, setLoadingAircraftInfo] = useState(false);
+  const [loadingAircraftImage, setLoadingAircraftImage] = useState(false);
 
   const wsRef = useRef(null);
 
@@ -143,16 +144,44 @@ function FlightTracker() {
     const parseAircraftFromUrl = (url) => {
       try {
         // URL format: https://www.planespotters.net/photo/{id}/{registration}-{airline}-{aircraft-type}
-        const match = url.match(/\/photo\/\d+\/([a-z0-9-]+)-([a-z0-9-]+)-([a-z0-9-]+)/i);
-        if (match) {
-          const reg = match[1].toUpperCase();
-          const aircraftModel = match[3]
-            .split('-')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
+        // Example: /photo/123/hs-thj-thai-airways-airbus-a350-941?utm_source=api
 
-          console.log('[fetchAircraftImage] Parsed from URL:', { registration: reg, model: aircraftModel });
-          return { registration: reg, aircraftType: aircraftModel };
+        // Remove query string first
+        const cleanUrl = url.split('?')[0];
+
+        const urlParts = cleanUrl.split('/');
+        const lastPart = urlParts[urlParts.length - 1];
+        const parts = lastPart.split('-');
+
+        if (parts.length >= 3) {
+          // Find where the aircraft manufacturer starts
+          const manufacturers = ['airbus', 'boeing', 'embraer', 'bombardier', 'atr', 'cessna', 'gulfstream', 'mcdonnell', 'lockheed'];
+          let aircraftStartIndex = -1;
+
+          for (let i = 0; i < parts.length; i++) {
+            if (manufacturers.includes(parts[i].toLowerCase())) {
+              aircraftStartIndex = i;
+              break;
+            }
+          }
+
+          if (aircraftStartIndex > 0) {
+            // Registration is everything before the manufacturer
+            const regParts = parts.slice(0, aircraftStartIndex);
+            // Find where registration ends (usually 2-3 parts, before airline name)
+            // Registration formats: XX-XXX, X-XXXX, XX-XXXX
+            let regLength = regParts.length >= 2 && regParts[0].length <= 2 && regParts[1].length <= 4 ? 2 : 1;
+
+            const reg = regParts.slice(0, regLength).join('-').toUpperCase();
+
+            // Aircraft model is from manufacturer onwards
+            const aircraftModel = parts.slice(aircraftStartIndex)
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+
+            console.log('[fetchAircraftImage] Parsed from URL:', { registration: reg, model: aircraftModel });
+            return { registration: reg, aircraftType: aircraftModel };
+          }
         }
       } catch (err) {
         console.error('[fetchAircraftImage] Error parsing URL:', err);
@@ -243,7 +272,7 @@ Keep it concise but informative, around 150-200 words.`;
           'X-Title': 'Oslo Airport Queue Monitor'
         },
         body: JSON.stringify({
-          model: 'openai/gpt-oss-120b',
+          model: 'openai/gpt-5-nano',
           messages: [
             {
               role: 'user',
@@ -311,6 +340,8 @@ Keep it concise but informative, around 150-200 words.`;
     setWeatherData({ departure: null, arrival: null });
     setAircraftInfo(null);
     setAircraftImage(null);
+    setLoadingAircraftImage(false);
+    setLoadingAircraftInfo(false);
 
     try {
       const apiKey = import.meta.env.VITE_AIRLABS_API_KEY;
@@ -453,42 +484,61 @@ Keep it concise but informative, around 150-200 words.`;
           arrival: arrivalWeather
         });
 
-        // Fetch aircraft info and image in background
+        // Fetch aircraft details in background
         console.log('[FlightTracker] Fetching aircraft details...');
         console.log('[FlightTracker] Registration:', flightInfo.aircraftRegistration);
         console.log('[FlightTracker] ICAO24:', flightInfo.icao24);
         console.log('[FlightTracker] Model:', flightInfo.aircraftModel);
 
         setLoadingAircraftInfo(true);
-        Promise.all([
-          fetchAircraftImage(flightInfo.aircraftRegistration, flightInfo.icao24),
-          generateAircraftInfo(flightInfo.aircraftModel, flightInfo.aircraftRegistration, flightInfo.airline)
-        ]).then(([image, info]) => {
-          console.log('[FlightTracker] Aircraft image result:', image);
-          console.log('[FlightTracker] Aircraft info result:', info);
+        setLoadingAircraftImage(true);
 
-          // If Planespotters returned aircraft info, update flightData
-          if (image && (image.registration || image.aircraftType || image.aircraftIcao)) {
-            setFlightData(prevData => ({
-              ...prevData,
-              aircraftRegistration: image.registration || prevData.aircraftRegistration,
-              aircraftModel: image.aircraftType || prevData.aircraftModel,
-              aircraftIcao: image.aircraftIcao || prevData.aircraftIcao
-            }));
-            console.log('[FlightTracker] Updated flight data with Planespotters info:', {
-              registration: image.registration,
-              model: image.aircraftType,
-              icao: image.aircraftIcao
-            });
-          }
+        // Fetch Planespotters first to get accurate aircraft model
+        fetchAircraftImage(flightInfo.aircraftRegistration, flightInfo.icao24)
+          .then(image => {
+            console.log('[FlightTracker] Aircraft image result:', image);
+            setLoadingAircraftImage(false);
 
-          setAircraftImage(image);
-          setAircraftInfo(info);
-          setLoadingAircraftInfo(false);
-        }).catch(err => {
-          console.error('[FlightTracker] Error fetching aircraft details:', err);
-          setLoadingAircraftInfo(false);
-        });
+            // Update display immediately with Planespotters data
+            if (image) {
+              setAircraftImage(image);
+
+              // Update flight data with Planespotters info
+              if (image.registration || image.aircraftType || image.aircraftIcao) {
+                setFlightData(prevData => ({
+                  ...prevData,
+                  aircraftRegistration: image.registration || prevData.aircraftRegistration,
+                  aircraftModel: image.aircraftType || prevData.aircraftModel,
+                  aircraftIcao: image.aircraftIcao || prevData.aircraftIcao
+                }));
+                console.log('[FlightTracker] Updated flight data with Planespotters info:', {
+                  registration: image.registration,
+                  model: image.aircraftType,
+                  icao: image.aircraftIcao
+                });
+              }
+
+              // Now generate AI info with the actual aircraft model from Planespotters
+              const aircraftModel = image.aircraftType || flightInfo.aircraftModel;
+              const registration = image.registration || flightInfo.aircraftRegistration;
+
+              console.log('[FlightTracker] Calling AI with aircraft model:', aircraftModel);
+              return generateAircraftInfo(aircraftModel, registration, flightInfo.airline);
+            } else {
+              // No image found, still try AI with whatever data we have
+              return generateAircraftInfo(flightInfo.aircraftModel, flightInfo.aircraftRegistration, flightInfo.airline);
+            }
+          })
+          .then(info => {
+            console.log('[FlightTracker] Aircraft info result:', info);
+            setAircraftInfo(info);
+            setLoadingAircraftInfo(false);
+          })
+          .catch(err => {
+            console.error('[FlightTracker] Error fetching aircraft details:', err);
+            setLoadingAircraftInfo(false);
+            setLoadingAircraftImage(false);
+          });
       } else {
         setError(`No flight found for ${flightNumber}. Try flight numbers like LH400, BA117, SK4035, DY1302.`);
       }
@@ -778,13 +828,21 @@ Keep it concise but informative, around 150-200 words.`;
                   <div className="detail-content">
                     <span className="detail-label">Aircraft</span>
                     <span className="detail-value">
-                      {flightData.aircraftRegistration ? `Registration: ${flightData.aircraftRegistration}` : ''}
-                      {flightData.aircraftRegistration && (flightData.aircraftIcao || flightData.aircraftModel) && ' • '}
-                      {flightData.aircraftIcao && `Type: ${flightData.aircraftIcao}`}
-                      {flightData.aircraftIcao && flightData.aircraftModel && ' • '}
-                      {flightData.aircraftModel && `Model: ${flightData.aircraftModel}`}
-                      {!flightData.aircraftRegistration && !flightData.aircraftIcao && !flightData.aircraftModel && flightData.icao24 && flightData.icao24 !== 'N/A' && 'Aircraft identified (limited data)'}
-                      {!flightData.aircraftRegistration && !flightData.aircraftIcao && !flightData.aircraftModel && (!flightData.icao24 || flightData.icao24 === 'N/A') && 'Not available'}
+                      {loadingAircraftInfo && !flightData.aircraftRegistration && !flightData.aircraftModel ? (
+                        <span style={{ color: '#888' }}>
+                          <span className="spinner-small" style={{ display: 'inline-block', width: '12px', height: '12px', marginRight: '8px' }}></span>
+                          Loading aircraft details...
+                        </span>
+                      ) : (
+                        <>
+                          {flightData.aircraftRegistration || ''}
+                          {flightData.aircraftRegistration && (flightData.aircraftIcao || flightData.aircraftModel) && ' • '}
+                          {flightData.aircraftIcao && `Type: ${flightData.aircraftIcao}`}
+                          {flightData.aircraftIcao && flightData.aircraftModel && ' • '}
+                          {flightData.aircraftModel && `Model: ${flightData.aircraftModel}`}
+                          {!loadingAircraftInfo && !flightData.aircraftRegistration && !flightData.aircraftIcao && !flightData.aircraftModel && 'Not available'}
+                        </>
+                      )}
                     </span>
                   </div>
                 </div>
@@ -929,10 +987,39 @@ Keep it concise but informative, around 150-200 words.`;
           <div className="aircraft-section">
               <h4 className="aircraft-section-title">✈️ About This Aircraft</h4>
 
-              {loadingAircraftInfo && !aircraftInfo && !aircraftImage && (
-                <div className="aircraft-loading">
-                  <div className="spinner-small"></div>
-                  <span>Loading aircraft details...</span>
+              {loadingAircraftImage && !aircraftImage && (
+                <div className="aircraft-image-skeleton">
+                  <div className="skeleton-box" style={{
+                    width: '100%',
+                    height: '280px',
+                    backgroundColor: '#2a2a2a',
+                    borderRadius: '8px',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: '-100%',
+                      width: '100%',
+                      height: '100%',
+                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                      animation: 'shimmer 1.5s infinite'
+                    }}></div>
+                  </div>
+                  <div style={{
+                    textAlign: 'center',
+                    color: '#888',
+                    fontSize: '14px',
+                    marginTop: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}>
+                    <div className="spinner-small" style={{ width: '14px', height: '14px' }}></div>
+                    Loading aircraft photo...
+                  </div>
                 </div>
               )}
 
@@ -954,6 +1041,13 @@ Keep it concise but informative, around 150-200 words.`;
                       View on Planespotters.net
                     </a>
                   </div>
+                </div>
+              )}
+
+              {loadingAircraftInfo && !aircraftInfo && (
+                <div className="aircraft-loading">
+                  <div className="spinner-small"></div>
+                  <span>Loading AI-generated aircraft information...</span>
                 </div>
               )}
 

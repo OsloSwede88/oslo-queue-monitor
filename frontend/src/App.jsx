@@ -326,7 +326,6 @@ function App() {
       </main>
 
       <footer className="footer">
-        <p>Data source: <a href="https://www.avinor.no/flyplass/oslo/flytider/" target="_blank" rel="noopener noreferrer">Avinor.no</a></p>
         <p className="disclaimer">Unofficial monitoring tool. Always arrive according to airline recommendations.</p>
       </footer>
     </div>

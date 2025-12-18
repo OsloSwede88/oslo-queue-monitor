@@ -685,3 +685,17 @@
 .aircraft-no-data p {
   margin: 0;
 }
+
+/* Skeleton loader animation */
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.aircraft-image-skeleton {
+  margin-bottom: 1.5rem;
+}
