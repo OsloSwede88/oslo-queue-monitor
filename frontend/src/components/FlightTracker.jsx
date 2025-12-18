@@ -276,8 +276,9 @@ Keep it concise but informative, around 150-200 words.`;
       const data = await response.json();
       console.log('AirLabs response:', data);
 
-      if (data.response && data.response.length > 0) {
-        const flight = data.response[0];
+      // Check if response exists and has flight data (response is an object, not array)
+      if (data.response && data.response.flight_iata) {
+        const flight = data.response;
 
         // Log aircraft data to debug
         console.log('Aircraft data:', flight);
