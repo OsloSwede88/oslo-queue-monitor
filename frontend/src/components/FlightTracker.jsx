@@ -341,16 +341,23 @@ Keep it concise but informative, around 150-200 words.`;
         });
 
         // Fetch aircraft info and image in background
+        console.log('[FlightTracker] Fetching aircraft details...');
+        console.log('[FlightTracker] Registration:', flightInfo.aircraftRegistration);
+        console.log('[FlightTracker] ICAO24:', flightInfo.icao24);
+        console.log('[FlightTracker] Model:', flightInfo.aircraftModel);
+
         setLoadingAircraftInfo(true);
         Promise.all([
           fetchAircraftImage(flightInfo.aircraftRegistration, flightInfo.icao24),
           generateAircraftInfo(flightInfo.aircraftModel, flightInfo.aircraftRegistration, flightInfo.airline)
         ]).then(([image, info]) => {
+          console.log('[FlightTracker] Aircraft image result:', image);
+          console.log('[FlightTracker] Aircraft info result:', info);
           setAircraftImage(image);
           setAircraftInfo(info);
           setLoadingAircraftInfo(false);
         }).catch(err => {
-          console.error('Error fetching aircraft details:', err);
+          console.error('[FlightTracker] Error fetching aircraft details:', err);
           setLoadingAircraftInfo(false);
         });
       } else {
@@ -789,8 +796,7 @@ Keep it concise but informative, around 150-200 words.`;
           )}
 
           {/* Aircraft Details Section */}
-          {(aircraftInfo || aircraftImage || loadingAircraftInfo) && (
-            <div className="aircraft-section">
+          <div className="aircraft-section">
               <h4 className="aircraft-section-title">✈️ About This Aircraft</h4>
 
               {loadingAircraftInfo && !aircraftInfo && !aircraftImage && (
@@ -836,7 +842,6 @@ Keep it concise but informative, around 150-200 words.`;
                 </div>
               )}
             </div>
-          )}
         </div>
       )}
 
