@@ -59,7 +59,7 @@ function FlightTracker() {
 
       // Use AviationStack API for real-time flight data
       const response = await fetch(
-        `http://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${flightNumber.toUpperCase()}`
+        `https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${flightNumber.toUpperCase()}`
       );
 
       if (!response.ok) {
