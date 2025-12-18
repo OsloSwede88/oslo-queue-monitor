@@ -1,0 +1,247 @@
+/* Animation System */
+
+/* Shimmer Effect - For Timeline Progress Bar */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
+/* Pulse Ring - For Active Timeline Nodes */
+@keyframes pulse-ring {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.4;
+  }
+}
+
+.pulse-ring {
+  animation: pulse-ring 1.5s infinite ease-in-out;
+}
+
+/* Slide In Left - For Sidebar */
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-left {
+  animation: slide-in-left 0.3s ease-out forwards;
+}
+
+/* Slide Out Left - For Sidebar Close */
+@keyframes slide-out-left {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+.slide-out-left {
+  animation: slide-out-left 0.3s ease-in forwards;
+}
+
+/* Fade In */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+/* Fade Out */
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.fade-out {
+  animation: fade-out 0.3s ease-in forwards;
+}
+
+/* Gradient Shift - For Background Gradients */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+/* Rotate - For Loading Spinners */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rotate {
+  animation: rotate 1s linear infinite;
+}
+
+/* Scale In */
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.scale-in {
+  animation: scale-in 0.2s ease-out forwards;
+}
+
+/* Bounce - For Success Indicators */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.bounce {
+  animation: bounce 0.6s ease-in-out;
+}
+
+/* Glow Pulse - For Live Indicators */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(157, 78, 221, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(157, 78, 221, 0.8);
+  }
+}
+
+.glow-pulse {
+  animation: glow-pulse 2s infinite ease-in-out;
+}
+
+/* Progress Fill - For Timeline */
+@keyframes progress-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--progress-width, 100%);
+  }
+}
+
+.progress-fill {
+  animation: progress-fill 2s ease-out forwards;
+}
+
+/* Skeleton Loading */
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+/* Hamburger Menu Animation */
+@keyframes hamburger-to-x-top {
+  0% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(6px) rotate(0);
+  }
+  100% {
+    transform: translateY(6px) rotate(45deg);
+  }
+}
+
+@keyframes hamburger-to-x-bottom {
+  0% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-6px) rotate(0);
+  }
+  100% {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+}
+
+@keyframes hamburger-to-x-middle {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Reduce Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

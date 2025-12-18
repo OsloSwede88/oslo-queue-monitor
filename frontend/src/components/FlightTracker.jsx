@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import './FlightTracker.css';
+import FlightTimeline from './flight/FlightTimeline';
 
 function FlightTracker() {
   const [flightNumber, setFlightNumber] = useState('');
@@ -644,12 +645,13 @@ Keep it concise but informative, around 150-200 words.`;
 
   return (
     <div className="flight-tracker">
-      <div className="flight-tracker-header">
-        <h2>✈️ Flight Tracker</h2>
-        <p>Track any flight in real-time</p>
-      </div>
+      <div className="container">
+        <div className="flight-tracker-header">
+          <h2>✈️ Flight Tracker</h2>
+          <p>Track any flight in real-time</p>
+        </div>
 
-      <div className="flight-search">
+        <div className="flight-search glass glass-card">
         <div className="search-inputs">
           <input
             type="text"
@@ -690,7 +692,7 @@ Keep it concise but informative, around 150-200 words.`;
       )}
 
       {subscribedFlights.length > 0 && (
-        <div className="subscriptions-card">
+        <div className="subscriptions-card glass glass-card">
           <h3>📬 Your Flight Subscriptions</h3>
           <p className="subscriptions-desc">You'll receive push notifications when these flights change</p>
           <div className="subscriptions-list">
@@ -721,7 +723,7 @@ Keep it concise but informative, around 150-200 words.`;
 
       {flightData && (
         <div className="flight-results">
-          <div className="flight-card">
+          <div className="flight-card glass glass-card">
             <div className="flight-card-header">
               <div>
                 <h3>{flightData.callsign?.trim() || 'Unknown Flight'}</h3>
@@ -737,6 +739,9 @@ Keep it concise but informative, around 150-200 words.`;
                 {!flightData.flightStatus && '🟢 Live'}
               </span>
             </div>
+
+            {/* Flight Timeline */}
+            <FlightTimeline flightData={flightData} />
 
             <div className="flight-details">
               {/* Route */}
@@ -905,7 +910,7 @@ Keep it concise but informative, around 150-200 words.`;
               <h4 className="weather-section-title">🌤️ Weather Conditions</h4>
               <div className="weather-cards">
                 {weatherData.departure && (
-                  <div className="weather-card">
+                  <div className="weather-card glass glass-card">
                     <div className="weather-card-header">
                       <span className="weather-icon">🛫</span>
                       <div>
@@ -943,7 +948,7 @@ Keep it concise but informative, around 150-200 words.`;
                 )}
 
                 {weatherData.arrival && (
-                  <div className="weather-card">
+                  <div className="weather-card glass glass-card">
                     <div className="weather-card-header">
                       <span className="weather-icon">🛬</span>
                       <div>
@@ -1070,7 +1075,7 @@ Keep it concise but informative, around 150-200 words.`;
       )}
 
       {!flightData && !error && !loading && (
-        <div className="flight-empty-state">
+        <div className="flight-empty-state glass glass-card">
           <div className="empty-icon">✈️</div>
           <h3>Track Your Flight</h3>
           <p>Enter a flight number to see real-time tracking information</p>
@@ -1079,6 +1084,7 @@ Keep it concise but informative, around 150-200 words.`;
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

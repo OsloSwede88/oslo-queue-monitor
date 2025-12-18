@@ -1,0 +1,287 @@
+/* Flight Timeline Component */
+
+.flight-timeline {
+  padding: 1.5rem;
+  margin: 1rem 0;
+  background: rgba(var(--glass-bg-rgb), 0.2);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+}
+
+/* Timeline Header */
+.timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.timeline-status {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-primary);
+}
+
+.timeline-eta {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Live Indicator Dot */
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-success);
+  animation: pulse-ring 1.5s infinite ease-in-out;
+  box-shadow: 0 0 8px var(--color-success);
+}
+
+/* Status Colors */
+.timeline-status.status-scheduled {
+  color: var(--color-text-secondary);
+}
+
+.timeline-status.status-boarding {
+  color: var(--color-warning);
+}
+
+.timeline-status.status-enRoute {
+  color: var(--color-success);
+}
+
+.timeline-status.status-arriving {
+  color: var(--color-info);
+}
+
+.timeline-status.status-landed {
+  color: var(--color-text-tertiary);
+}
+
+/* Timeline Track Container */
+.timeline-track-container {
+  position: relative;
+  padding: 2.5rem 0;
+}
+
+/* Timeline Track */
+.timeline-track {
+  position: relative;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: visible;
+}
+
+/* Animated Progress Fill */
+.timeline-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0%,
+    var(--color-secondary) 50%,
+    var(--color-accent) 100%
+  );
+  border-radius: 2px;
+  transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+/* Shimmer effect on progress bar */
+.timeline-progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+  background-size: 200% 100%;
+}
+
+/* Timeline Nodes */
+.timeline-node {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+}
+
+/* Node Circle */
+.timeline-node::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-bg-tertiary);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  display: block;
+}
+
+/* Node Ring (for pulse animation) */
+.node-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  z-index: -1;
+  transition: all 0.3s ease;
+}
+
+/* Upcoming Node */
+.timeline-node.upcoming::before {
+  background: var(--color-bg-tertiary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Completed Node */
+.timeline-node.completed::before {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  width: 14px;
+  height: 14px;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+.timeline-node.completed .node-ring {
+  border-color: var(--color-success);
+  width: 20px;
+  height: 20px;
+  opacity: 0.3;
+}
+
+/* Active Node */
+.timeline-node.active::before {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  width: 16px;
+  height: 16px;
+  box-shadow:
+    0 0 0 4px rgba(157, 78, 221, 0.3),
+    0 0 12px rgba(157, 78, 221, 0.6);
+}
+
+.timeline-node.active .node-ring {
+  border-color: var(--color-primary);
+  animation: pulse-ring 1.5s infinite ease-in-out;
+  width: 24px;
+  height: 24px;
+}
+
+/* Timeline Labels */
+.timeline-label {
+  position: absolute;
+  top: calc(100% + 1rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.timeline-label-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.timeline-node.active .timeline-label-text {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.timeline-node.completed .timeline-label-text {
+  color: var(--color-success);
+}
+
+.timeline-time {
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 640px) {
+  .flight-timeline {
+    padding: 1rem;
+  }
+
+  .timeline-track-container {
+    padding: 2rem 0;
+  }
+
+  .timeline-label {
+    top: calc(100% + 0.75rem);
+  }
+
+  .timeline-label-text {
+    font-size: 0.6875rem;
+  }
+
+  .timeline-time {
+    font-size: 0.625rem;
+  }
+
+  /* Slightly smaller nodes on mobile */
+  .timeline-node::before {
+    width: 10px;
+    height: 10px;
+  }
+
+  .timeline-node.completed::before {
+    width: 12px;
+    height: 12px;
+  }
+
+  .timeline-node.active::before {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Very Small Screens - Vertical Layout */
+@media (max-width: 480px) {
+  .timeline-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .timeline-progress,
+  .timeline-progress::after,
+  .timeline-node::before,
+  .node-ring,
+  .live-dot {
+    animation: none !important;
+    transition: none !important;
+  }
+}

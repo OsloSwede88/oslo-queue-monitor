@@ -2,6 +2,16 @@
 
 .flight-tracker {
   width: 100%;
+  min-height: calc(100vh - var(--header-height));
+  padding: 2rem 1rem;
+}
+
+.flight-tracker .container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .flight-tracker-header {
@@ -23,11 +33,7 @@
 
 /* Search Section */
 .flight-search {
-  background: var(--color-surface);
-  border-radius: 1rem;
   padding: 2rem;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--color-border);
   margin-bottom: 2rem;
 }
 
@@ -90,11 +96,7 @@
 }
 
 .flight-card {
-  background: var(--color-surface);
-  border-radius: 1rem;
   padding: 2rem;
-  box-shadow: var(--shadow-lg), var(--shadow-glow);
-  border: 1px solid var(--color-border);
 }
 
 .flight-card-header {
@@ -277,12 +279,8 @@
 
 /* Empty State */
 .flight-empty-state {
-  background: var(--color-surface);
-  border-radius: 1rem;
   padding: 3rem 2rem;
   text-align: center;
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-md);
 }
 
 .empty-icon {
@@ -338,11 +336,7 @@
 }
 
 .weather-card {
-  background: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border);
-  border-radius: 0.75rem;
   padding: 1.5rem;
-  box-shadow: var(--shadow-sm);
 }
 
 .weather-card-header {
