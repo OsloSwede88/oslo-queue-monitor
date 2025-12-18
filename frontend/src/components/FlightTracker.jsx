@@ -143,18 +143,18 @@ function FlightTracker() {
     setWeatherData({ departure: null, arrival: null });
 
     try {
-      const apiKey = import.meta.env.VITE_AVIATIONSTACK_API_KEY;
+      const apiKey = import.meta.env.VITE_AIRLABS_API_KEY;
 
       // Check if API key is configured
-      if (!apiKey || apiKey === 'your_aviationstack_api_key_here') {
-        setError('Flight tracking requires an AviationStack API key. Get a free key at aviationstack.com (100 requests/month) and add it to your .env file as VITE_AVIATIONSTACK_API_KEY.');
+      if (!apiKey || apiKey === 'your_airlabs_api_key_here') {
+        setError('Flight tracking requires an AirLabs API key. Get a free key at airlabs.co (1000 requests/month) and add it to your .env file as VITE_AIRLABS_API_KEY.');
         setLoading(false);
         return;
       }
 
-      // Use AviationStack API for real-time flight data
+      // Use AirLabs API for real-time flight data
       const response = await fetch(
-        `https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${flightNumber.toUpperCase()}`
+        `https://airlabs.co/api/v9/flight?api_key=${apiKey}&flight_iata=${flightNumber.toUpperCase()}`
       );
 
       if (!response.ok) {
@@ -162,56 +162,56 @@ function FlightTracker() {
       }
 
       const data = await response.json();
-      console.log('AviationStack response:', data);
+      console.log('AirLabs response:', data);
 
-      if (data.data && data.data.length > 0) {
-        const flight = data.data[0];
+      if (data.response && data.response.length > 0) {
+        const flight = data.response[0];
 
         // Log aircraft data to debug
-        console.log('Aircraft data:', flight.aircraft);
+        console.log('Aircraft data:', flight);
 
-        // Convert AviationStack format to our format
+        // Convert AirLabs format to our format
         const flightInfo = {
-          callsign: flight.flight?.iata || flightNumber,
-          estDepartureAirport: flight.departure?.iata || 'N/A',
-          estArrivalAirport: flight.arrival?.iata || 'N/A',
-          departureAirportName: flight.departure?.airport || 'N/A',
-          arrivalAirportName: flight.arrival?.airport || 'N/A',
+          callsign: flight.flight_iata || flight.flight_number || flightNumber,
+          estDepartureAirport: flight.dep_iata || 'N/A',
+          estArrivalAirport: flight.arr_iata || 'N/A',
+          departureAirportName: flight.dep_name || 'N/A',
+          arrivalAirportName: flight.arr_name || 'N/A',
 
           // Departure times
-          scheduledDeparture: flight.departure?.scheduled || null,
-          estimatedDeparture: flight.departure?.estimated || null,
-          actualDeparture: flight.departure?.actual || null,
+          scheduledDeparture: flight.dep_time || null,
+          estimatedDeparture: flight.dep_estimated || flight.dep_time || null,
+          actualDeparture: flight.dep_actual || null,
 
           // Arrival times
-          scheduledArrival: flight.arrival?.scheduled || null,
-          estimatedArrival: flight.arrival?.estimated || null,
-          actualArrival: flight.arrival?.actual || null,
+          scheduledArrival: flight.arr_time || null,
+          estimatedArrival: flight.arr_estimated || flight.arr_time || null,
+          actualArrival: flight.arr_actual || null,
 
           // Legacy fields for compatibility
-          firstSeen: flight.departure?.scheduled ? new Date(flight.departure.scheduled).getTime() / 1000 : null,
-          lastSeen: flight.arrival?.scheduled ? new Date(flight.arrival.scheduled).getTime() / 1000 : null,
+          firstSeen: flight.dep_time ? new Date(flight.dep_time).getTime() / 1000 : null,
+          lastSeen: flight.arr_time ? new Date(flight.arr_time).getTime() / 1000 : null,
 
-          // Aircraft information - try multiple fields
-          icao24: flight.aircraft?.registration || flight.aircraft?.iata || flight.aircraft?.icao || flight.flight?.icao || 'N/A',
-          aircraftRegistration: flight.aircraft?.registration || null,
-          aircraftIcao: flight.aircraft?.iata || flight.aircraft?.icao || null,
-          aircraftModel: flight.aircraft?.model || null,
+          // Aircraft information
+          icao24: flight.reg_number || flight.hex || 'N/A',
+          aircraftRegistration: flight.reg_number || null,
+          aircraftIcao: flight.aircraft_icao || null,
+          aircraftModel: flight.model || null,
 
           // Flight details
-          flightStatus: flight.flight_status,
-          airline: flight.airline?.name,
-          airlineIata: flight.airline?.iata,
+          flightStatus: flight.status,
+          airline: flight.airline_name,
+          airlineIata: flight.airline_iata,
 
           // Terminal/Gate info
-          departureTerminal: flight.departure?.terminal || null,
-          departureGate: flight.departure?.gate || null,
-          arrivalTerminal: flight.arrival?.terminal || null,
-          arrivalGate: flight.arrival?.gate || null,
+          departureTerminal: flight.dep_terminal || null,
+          departureGate: flight.dep_gate || null,
+          arrivalTerminal: flight.arr_terminal || null,
+          arrivalGate: flight.arr_gate || null,
 
-          // Delay info
-          departureDelay: flight.departure?.delay || null,
-          arrivalDelay: flight.arrival?.delay || null
+          // Delay info (calculated from scheduled vs actual/estimated)
+          departureDelay: flight.delayed || null,
+          arrivalDelay: null
         };
 
         setFlightData(flightInfo);
@@ -227,7 +227,7 @@ function FlightTracker() {
           arrival: arrivalWeather
         });
       } else {
-        setError(`No flight found for ${flightNumber}. Try flight numbers like LH400, BA117, SK4035.`);
+        setError(`No flight found for ${flightNumber}. Try flight numbers like LH400, BA117, SK4035, DY1302.`);
       }
     } catch (err) {
       console.error('Flight search error:', err);

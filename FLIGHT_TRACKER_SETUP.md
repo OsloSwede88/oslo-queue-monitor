@@ -12,31 +12,35 @@ The Oslo Queue Monitor now includes a comprehensive flight tracking feature that
 
 ## API Setup
 
-### 1. AviationStack API (Required - FREE)
+### 1. AirLabs API (Required - FREE)
 
-AviationStack provides real-time flight tracking data with a free tier.
+AirLabs provides real-time flight tracking data with a generous free tier.
 
-- **API**: AviationStack
+- **API**: AirLabs
 - **Cost**: Free tier available
-- **Limits**: 100 requests per month (free tier)
-- **Documentation**: https://aviationstack.com/documentation
+- **Limits**: 1,000 requests per month (free tier) - 10x more than AviationStack!
+- **Documentation**: https://airlabs.co/docs/
 
 **Setup Instructions:**
 
 1. **Sign up for a free account**:
-   - Visit: https://aviationstack.com/product
-   - Click "Get Free API Key"
+   - Visit: https://airlabs.co/
+   - Click "Sign Up" or "Get API Key"
    - Create an account (email + password)
 
 2. **Get your API key**:
-   - Log in to your AviationStack dashboard
-   - Find your API Access Key on the dashboard
+   - Log in to your AirLabs dashboard
+   - Find your API Key on the dashboard
    - Copy the key
 
 3. **Add to environment variables**:
    ```bash
    # In frontend/.env file:
-   VITE_AVIATIONSTACK_API_KEY=your_actual_api_key_here
+   VITE_AIRLABS_API_KEY=your_actual_api_key_here
+
+   # On Railway (backend):
+   # Go to your Railway project → Variables tab
+   # Add: AIRLABS_API_KEY=your_actual_api_key_here
    ```
 
 4. **Restart the dev server**:
@@ -104,15 +108,16 @@ Example flight numbers to try:
 ### Flight not found
 - Make sure the flight number is correct and in IATA format (e.g., "LH867", "SK4035")
 - Try searching without spaces (e.g., "SK4035" not "SK 4035")
-- Verify your AviationStack API key is correctly configured in `.env`
-- Free tier has 100 requests/month - check if you've exceeded the limit
-- Some regional/charter flights may not be available in AviationStack's database
+- Verify your AirLabs API key is correctly configured in `.env`
+- Free tier has 1,000 requests/month - check if you've exceeded the limit
+- Some regional/charter flights may not be available in AirLabs' database
 
 ### API Key errors
-- Double-check your AviationStack API key is correctly copied to `.env`
-- Make sure the environment variable name is exactly `VITE_AVIATIONSTACK_API_KEY`
+- Double-check your AirLabs API key is correctly copied to `.env`
+- Make sure the environment variable name is exactly `VITE_AIRLABS_API_KEY`
 - Restart your dev server after adding/changing the API key
 - Check browser console for detailed error messages
+- For backend: Ensure `AIRLABS_API_KEY` is set in Railway environment variables
 
 ### Weather API errors
 - Verify your CheckWX API key is correct
@@ -133,10 +138,10 @@ Potential features to add:
 
 | API | Free Tier | Cost Beyond Free |
 |-----|-----------|------------------|
-| AviationStack | 100 req/month | $9.99/month for 500 req/month |
+| AirLabs | 1,000 req/month | $49/month for 25,000 req/month |
 | CheckWX Weather | 3,000 req/day | $10/month for 10,000/day |
 
-**Note**: The free tier of 100 requests/month for AviationStack should be sufficient for personal use. If you track ~3 flights per day, you'll stay within the limit.
+**Note**: The free tier of 1,000 requests/month for AirLabs is very generous for personal use. You can track ~30 flights per day and stay within the limit!
 
 ## Privacy
 

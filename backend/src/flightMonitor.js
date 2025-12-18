@@ -3,7 +3,7 @@ class FlightMonitor {
     this.subscriptions = new Map(); // flightNumber -> {data, subscribers}
     this.monitoringInterval = null;
     this.checkInterval = 5 * 60 * 1000; // 5 minutes
-    this.apiKey = process.env.AVIATION_API_KEY;
+    this.apiKey = process.env.AIRLABS_API_KEY;
   }
 
   // Add a subscription
@@ -91,14 +91,14 @@ class FlightMonitor {
 
   // Check a single flight
   async checkFlight(flightNumber, subscription) {
-    if (!this.apiKey || this.apiKey === 'your_aviationstack_api_key_here') {
-      console.error('[FlightMonitor] Aviation API key not configured');
+    if (!this.apiKey || this.apiKey === 'your_airlabs_api_key_here') {
+      console.error('[FlightMonitor] AirLabs API key not configured');
       return;
     }
 
     try {
       const response = await fetch(
-        `https://api.aviationstack.com/v1/flights?access_key=${this.apiKey}&flight_iata=${flightNumber}`
+        `https://airlabs.co/api/v9/flight?api_key=${this.apiKey}&flight_iata=${flightNumber}`
       );
 
       if (!response.ok) {
@@ -108,12 +108,12 @@ class FlightMonitor {
 
       const data = await response.json();
 
-      if (!data.data || data.data.length === 0) {
+      if (!data.response || data.response.length === 0) {
         console.log(`[FlightMonitor] No data found for ${flightNumber}`);
         return;
       }
 
-      const currentFlight = data.data[0];
+      const currentFlight = data.response[0];
       const changes = this.detectChanges(subscription.lastData, currentFlight);
 
       if (changes.length > 0) {
@@ -128,68 +128,68 @@ class FlightMonitor {
     }
   }
 
-  // Detect changes between old and new flight data
+  // Detect changes between old and new flight data (AirLabs format)
   detectChanges(oldData, newData) {
     const changes = [];
 
     // Check flight status
-    if (oldData.flight_status !== newData.flight_status) {
+    if (oldData.status !== newData.status) {
       changes.push({
         type: 'status',
         field: 'Flight Status',
-        old: oldData.flight_status,
-        new: newData.flight_status,
+        old: oldData.status,
+        new: newData.status,
         icon: '📊'
       });
     }
 
     // Check departure gate
-    if (oldData.departure?.gate !== newData.departure?.gate && newData.departure?.gate) {
+    if (oldData.dep_gate !== newData.dep_gate && newData.dep_gate) {
       changes.push({
         type: 'gate',
         field: 'Departure Gate',
-        old: oldData.departure?.gate || 'Not assigned',
-        new: newData.departure?.gate,
+        old: oldData.dep_gate || 'Not assigned',
+        new: newData.dep_gate,
         icon: '🚪'
       });
     }
 
     // Check arrival gate
-    if (oldData.arrival?.gate !== newData.arrival?.gate && newData.arrival?.gate) {
+    if (oldData.arr_gate !== newData.arr_gate && newData.arr_gate) {
       changes.push({
         type: 'gate',
         field: 'Arrival Gate',
-        old: oldData.arrival?.gate || 'Not assigned',
-        new: newData.arrival?.gate,
+        old: oldData.arr_gate || 'Not assigned',
+        new: newData.arr_gate,
         icon: '🚪'
       });
     }
 
     // Check departure terminal
-    if (oldData.departure?.terminal !== newData.departure?.terminal && newData.departure?.terminal) {
+    if (oldData.dep_terminal !== newData.dep_terminal && newData.dep_terminal) {
       changes.push({
         type: 'terminal',
         field: 'Departure Terminal',
-        old: oldData.departure?.terminal || 'Not assigned',
-        new: newData.departure?.terminal,
+        old: oldData.dep_terminal || 'Not assigned',
+        new: newData.dep_terminal,
         icon: '🏢'
       });
     }
 
     // Check arrival terminal
-    if (oldData.arrival?.terminal !== newData.arrival?.terminal && newData.arrival?.terminal) {
+    if (oldData.arr_terminal !== newData.arr_terminal && newData.arr_terminal) {
       changes.push({
         type: 'terminal',
         field: 'Arrival Terminal',
-        old: oldData.arrival?.terminal || 'Not assigned',
-        new: newData.arrival?.terminal,
+        old: oldData.arr_terminal || 'Not assigned',
+        new: newData.arr_terminal,
         icon: '🏢'
       });
     }
 
     // Check for delays
-    const oldDelay = oldData.departure?.delay || 0;
-    const newDelay = newData.departure?.delay || 0;
+    const oldDelay = oldData.delayed || 0;
+    const newDelay = newData.delayed || 0;
     if (newDelay > oldDelay) {
       changes.push({
         type: 'delay',
@@ -201,23 +201,23 @@ class FlightMonitor {
     }
 
     // Check departure time changes
-    if (oldData.departure?.estimated !== newData.departure?.estimated && newData.departure?.estimated) {
+    if (oldData.dep_estimated !== newData.dep_estimated && newData.dep_estimated) {
       changes.push({
         type: 'time',
         field: 'Estimated Departure',
-        old: oldData.departure?.estimated || oldData.departure?.scheduled,
-        new: newData.departure?.estimated,
+        old: oldData.dep_estimated || oldData.dep_time,
+        new: newData.dep_estimated,
         icon: '🕐'
       });
     }
 
     // Check arrival time changes
-    if (oldData.arrival?.estimated !== newData.arrival?.estimated && newData.arrival?.estimated) {
+    if (oldData.arr_estimated !== newData.arr_estimated && newData.arr_estimated) {
       changes.push({
         type: 'time',
         field: 'Estimated Arrival',
-        old: oldData.arrival?.estimated || oldData.arrival?.scheduled,
-        new: newData.arrival?.estimated,
+        old: oldData.arr_estimated || oldData.arr_time,
+        new: newData.arr_estimated,
         icon: '🕐'
       });
     }
@@ -232,9 +232,19 @@ class FlightMonitor {
       flightNumber: flightNumber,
       changes: changes,
       flightData: {
-        status: currentFlight.flight_status,
-        departure: currentFlight.departure,
-        arrival: currentFlight.arrival
+        status: currentFlight.status,
+        departure: {
+          gate: currentFlight.dep_gate,
+          terminal: currentFlight.dep_terminal,
+          estimated: currentFlight.dep_estimated,
+          scheduled: currentFlight.dep_time
+        },
+        arrival: {
+          gate: currentFlight.arr_gate,
+          terminal: currentFlight.arr_terminal,
+          estimated: currentFlight.arr_estimated,
+          scheduled: currentFlight.arr_time
+        }
       },
       timestamp: new Date().toISOString()
     };
