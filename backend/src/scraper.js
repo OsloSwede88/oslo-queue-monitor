@@ -61,6 +61,15 @@ class AvinorScraper {
     }
   }
 
+  translateToEnglish(norwegianText) {
+    // Translate Norwegian queue time phrases to English
+    return norwegianText
+      .replace(/mindre enn/gi, 'less than')
+      .replace(/mer enn/gi, 'more than')
+      .replace(/ca\.?\s*/gi, 'approx. ')
+      .replace(/min/gi, 'min');
+  }
+
   parseQueueTime(text) {
     // Text format: "Estimert ventetid i sikkerhetskontrollen: mindre enn 15 min"
     const match = text.match(/(?:mindre enn|mer enn|ca\.?)\s*(\d+)\s*min/i);
@@ -70,13 +79,16 @@ class AvinorScraper {
 
     if (match) {
       minutes = parseInt(match[1], 10);
-      displayText = text.split(':')[1]?.trim() || text;
+      const rawText = text.split(':')[1]?.trim() || text;
+      displayText = this.translateToEnglish(rawText);
     } else if (text.includes('mindre enn')) {
       // If no specific number, assume less than the mentioned value
       minutes = 15; // Default to 15 for "mindre enn 15 min"
-      displayText = text.split(':')[1]?.trim() || 'mindre enn 15 min';
+      const rawText = text.split(':')[1]?.trim() || 'mindre enn 15 min';
+      displayText = this.translateToEnglish(rawText);
     } else {
-      displayText = text.split(':')[1]?.trim() || text;
+      const rawText = text.split(':')[1]?.trim() || text;
+      displayText = this.translateToEnglish(rawText);
     }
 
     return {
