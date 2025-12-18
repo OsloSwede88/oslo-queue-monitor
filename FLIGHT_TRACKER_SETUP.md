@@ -5,23 +5,44 @@ The Oslo Queue Monitor now includes a comprehensive flight tracking feature that
 ## Features
 
 - **Flight Search**: Search by flight number and date
-- **Real-time Data**: Uses OpenSky Network API for live flight tracking
+- **Real-time Data**: Uses AviationStack API for live flight tracking
 - **Weather Information**: Displays current weather at departure and arrival airports
-- **Flight Details**: Shows departure/arrival airports, times, aircraft ID, and route
+- **Flight Details**: Shows departure/arrival airports, times, aircraft ID, route, and flight status
 - **Direct Links**: Quick access to FlightRadar24 for more details
 
 ## API Setup
 
-### 1. OpenSky Network API (Required - FREE)
+### 1. AviationStack API (Required - FREE)
 
-The OpenSky Network API is completely free and requires no API key.
+AviationStack provides real-time flight tracking data with a free tier.
 
-- **API**: OpenSky Network
-- **Cost**: Free
-- **Limits**: None for basic usage
-- **Documentation**: https://opensky-network.org/apidoc/
+- **API**: AviationStack
+- **Cost**: Free tier available
+- **Limits**: 100 requests per month (free tier)
+- **Documentation**: https://aviationstack.com/documentation
 
-✅ **No setup required** - This API works out of the box!
+**Setup Instructions:**
+
+1. **Sign up for a free account**:
+   - Visit: https://aviationstack.com/product
+   - Click "Get Free API Key"
+   - Create an account (email + password)
+
+2. **Get your API key**:
+   - Log in to your AviationStack dashboard
+   - Find your API Access Key on the dashboard
+   - Copy the key
+
+3. **Add to environment variables**:
+   ```bash
+   # In frontend/.env file:
+   VITE_AVIATIONSTACK_API_KEY=your_actual_api_key_here
+   ```
+
+4. **Restart the dev server**:
+   ```bash
+   npm run dev
+   ```
 
 ### 2. CheckWX Weather API (Optional - FREE)
 
@@ -81,13 +102,20 @@ Example flight numbers to try:
 - Verify you haven't exceeded the free tier limit (3,000 requests/day)
 
 ### Flight not found
-- Make sure the flight number is correct
+- Make sure the flight number is correct and in IATA format (e.g., "LH867", "SK4035")
 - Try searching without spaces (e.g., "SK4035" not "SK 4035")
-- The OpenSky API shows flights from the last 24 hours
-- Some flights may not be tracked by OpenSky
+- Verify your AviationStack API key is correctly configured in `.env`
+- Free tier has 100 requests/month - check if you've exceeded the limit
+- Some regional/charter flights may not be available in AviationStack's database
+
+### API Key errors
+- Double-check your AviationStack API key is correctly copied to `.env`
+- Make sure the environment variable name is exactly `VITE_AVIATIONSTACK_API_KEY`
+- Restart your dev server after adding/changing the API key
+- Check browser console for detailed error messages
 
 ### Weather API errors
-- Verify your API key is correct
+- Verify your CheckWX API key is correct
 - Check that the airport ICAO code is valid
 - Some smaller airports may not have weather data available
 
@@ -105,8 +133,10 @@ Potential features to add:
 
 | API | Free Tier | Cost Beyond Free |
 |-----|-----------|------------------|
-| OpenSky Network | Unlimited | Free |
+| AviationStack | 100 req/month | $9.99/month for 500 req/month |
 | CheckWX Weather | 3,000 req/day | $10/month for 10,000/day |
+
+**Note**: The free tier of 100 requests/month for AviationStack should be sufficient for personal use. If you track ~3 flights per day, you'll stay within the limit.
 
 ## Privacy
 

@@ -48,27 +48,49 @@ function FlightTracker() {
     setWeatherData({ departure: null, arrival: null });
 
     try {
-      // Use OpenSky Network API (free, no key needed)
-      const response = await fetch(`https://opensky-network.org/api/flights/all?begin=${Math.floor(Date.now() / 1000) - 86400}&end=${Math.floor(Date.now() / 1000)}`);
+      const apiKey = import.meta.env.VITE_AVIATIONSTACK_API_KEY;
+
+      // Check if API key is configured
+      if (!apiKey || apiKey === 'your_aviationstack_api_key_here') {
+        setError('Flight tracking requires an AviationStack API key. Get a free key at aviationstack.com (100 requests/month) and add it to your .env file as VITE_AVIATIONSTACK_API_KEY.');
+        setLoading(false);
+        return;
+      }
+
+      // Use AviationStack API for real-time flight data
+      const response = await fetch(
+        `http://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${flightNumber.toUpperCase()}`
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch flight data');
+        throw new Error(`API error: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('AviationStack response:', data);
 
-      // Filter by flight number (callsign in OpenSky)
-      const flight = data.find(f =>
-        f.callsign && f.callsign.trim().toUpperCase().includes(flightNumber.toUpperCase().trim())
-      );
+      if (data.data && data.data.length > 0) {
+        const flight = data.data[0];
 
-      if (flight) {
-        setFlightData(flight);
+        // Convert AviationStack format to our format
+        const flightInfo = {
+          callsign: flight.flight?.iata || flightNumber,
+          estDepartureAirport: flight.departure?.iata || 'N/A',
+          estArrivalAirport: flight.arrival?.iata || 'N/A',
+          firstSeen: flight.departure?.scheduled ? new Date(flight.departure.scheduled).getTime() / 1000 : null,
+          lastSeen: flight.arrival?.scheduled ? new Date(flight.arrival.scheduled).getTime() / 1000 : null,
+          icao24: flight.flight?.icao || flight.aircraft?.registration || 'N/A',
+          flightStatus: flight.flight_status,
+          airline: flight.airline?.name,
+          aircraft: flight.aircraft?.registration
+        };
 
-        // Fetch weather data for departure and arrival airports
+        setFlightData(flightInfo);
+
+        // Fetch weather data
         const [departureWeather, arrivalWeather] = await Promise.all([
-          fetchWeatherData(flight.estDepartureAirport),
-          fetchWeatherData(flight.estArrivalAirport)
+          fetchWeatherData(flightInfo.estDepartureAirport),
+          fetchWeatherData(flightInfo.estArrivalAirport)
         ]);
 
         setWeatherData({
@@ -76,11 +98,11 @@ function FlightTracker() {
           arrival: arrivalWeather
         });
       } else {
-        setError(`No flight found for ${flightNumber}`);
+        setError(`No flight found for ${flightNumber}. Try flight numbers like LH400, BA117, SK4035.`);
       }
     } catch (err) {
       console.error('Flight search error:', err);
-      setError('Unable to fetch flight data. Please try again.');
+      setError(`Unable to fetch flight data: ${err.message}. Please check your API key or try again later.`);
     } finally {
       setLoading(false);
     }
