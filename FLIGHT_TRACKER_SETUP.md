@@ -140,7 +140,7 @@ To enable AI-generated aircraft information:
    npm run dev
    ```
 
-**Model Used**: google/gemini-2.0-flash-exp:free (completely free)
+**Model Used**: openai/gpt-5-nano (free)
 
 ### 4. Planespotters.net (Automatic - FREE)
 
