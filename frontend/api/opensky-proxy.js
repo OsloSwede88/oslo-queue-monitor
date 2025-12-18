@@ -31,20 +31,33 @@ export default async function handler(req, res) {
   try {
     // Step 1: Get OAuth token
     console.log('[OpenSky Proxy] Fetching OAuth token...');
-    const tokenResponse = await fetch(
-      'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams({
-          grant_type: 'client_credentials',
-          client_id: clientId,
-          client_secret: clientSecret
-        })
-      }
-    );
+    console.log('[OpenSky Proxy] Client ID:', clientId);
+
+    let tokenResponse;
+    try {
+      tokenResponse = await fetch(
+        'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: new URLSearchParams({
+            grant_type: 'client_credentials',
+            client_id: clientId,
+            client_secret: clientSecret
+          })
+        }
+      );
+    } catch (fetchError) {
+      console.error('[OpenSky Proxy] Token fetch network error:', fetchError.message);
+      console.error('[OpenSky Proxy] Error cause:', fetchError.cause);
+      return res.status(500).json({
+        error: 'Network error connecting to OpenSky auth server',
+        details: fetchError.message,
+        cause: fetchError.cause?.message || 'Unknown'
+      });
+    }
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
