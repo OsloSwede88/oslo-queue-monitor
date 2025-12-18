@@ -219,6 +219,28 @@ Keep it concise but informative, around 150-200 words.`;
     return null;
   };
 
+  const normalizeAirportName = (airportName, iataCode) => {
+    // Map Norwegian airport technical names to city names
+    const norwegianAirportMappings = {
+      'Kjevik': 'Kristiansand',
+      'Sola': 'Stavanger',
+      'Flesland': 'Bergen',
+      'Værnes': 'Trondheim',
+      'Langnes': 'Tromsø',
+      'Gardermoen': 'Oslo',
+      'Torp': 'Sandefjord',
+      'Vigra': 'Ålesund'
+    };
+
+    // Check if the airport name should be mapped to a city name
+    if (norwegianAirportMappings[airportName]) {
+      return norwegianAirportMappings[airportName];
+    }
+
+    // Return the original name if no mapping found
+    return airportName;
+  };
+
   const searchFlight = async () => {
     if (!flightNumber.trim()) {
       setError('Please enter a flight number');
@@ -265,8 +287,8 @@ Keep it concise but informative, around 150-200 words.`;
           callsign: flight.flight_iata || flight.flight_number || flightNumber,
           estDepartureAirport: flight.dep_iata || 'N/A',
           estArrivalAirport: flight.arr_iata || 'N/A',
-          departureAirportName: flight.dep_name || 'N/A',
-          arrivalAirportName: flight.arr_name || 'N/A',
+          departureAirportName: normalizeAirportName(flight.dep_name || 'N/A', flight.dep_iata),
+          arrivalAirportName: normalizeAirportName(flight.arr_name || 'N/A', flight.arr_iata),
 
           // Departure times
           scheduledDeparture: flight.dep_time || null,
