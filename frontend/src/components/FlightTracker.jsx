@@ -336,7 +336,7 @@ function FlightTracker() {
                       {flightData.aircraftIcao && `ICAO: ${flightData.aircraftIcao}`}
                       {flightData.aircraftIcao && flightData.aircraftModel && ' • '}
                       {flightData.aircraftModel && `Model: ${flightData.aircraftModel}`}
-                      {!flightData.aircraftRegistration && !flightData.aircraftIcao && !flightData.aircraftModel && 'Aircraft info not available (upgrade API plan for details)'}
+                      {!flightData.aircraftRegistration && !flightData.aircraftIcao && !flightData.aircraftModel && 'Not available'}
                     </span>
                   </div>
                 </div>
