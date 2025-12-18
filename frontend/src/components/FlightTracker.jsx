@@ -9,105 +9,12 @@ function FlightTracker() {
   const [flightData, setFlightData] = useState(null);
   const [weatherData, setWeatherData] = useState({ departure: null, arrival: null });
   const [error, setError] = useState(null);
-  const [subscribedFlights, setSubscribedFlights] = useState(() => {
-    const saved = localStorage.getItem('subscribedFlights');
-    return saved ? JSON.parse(saved) : [];
-  });
   const [aircraftInfo, setAircraftInfo] = useState(null);
   const [aircraftImage, setAircraftImage] = useState(null);
   const [loadingAircraftInfo, setLoadingAircraftInfo] = useState(false);
   const [loadingAircraftImage, setLoadingAircraftImage] = useState(false);
 
-  const wsRef = useRef(null);
-
-  // WebSocket connection for flight subscriptions
-  useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_URL || 'https://oslo-queue-backend-production.up.railway.app';
-    const wsUrl = API_URL.replace(/^http/, 'ws');
-
-    console.log('[FlightTracker] Connecting to WebSocket:', wsUrl);
-
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      console.log('[FlightTracker] WebSocket connected');
-
-      // Re-subscribe to all saved flights
-      subscribedFlights.forEach(sub => {
-        console.log(`[FlightTracker] Re-subscribing to ${sub.flightNumber}`);
-        ws.send(JSON.stringify({
-          type: 'subscribe-flight',
-          flightNumber: sub.flightNumber,
-          flightData: sub.lastChecked
-        }));
-      });
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-
-        if (message.type === 'flight-update') {
-          console.log('[FlightTracker] Flight update received:', message);
-          handleFlightUpdate(message);
-        } else if (message.type === 'subscription-confirmed') {
-          console.log(`[FlightTracker] Subscription confirmed for ${message.flightNumber}`);
-        } else if (message.type === 'unsubscription-confirmed') {
-          console.log(`[FlightTracker] Unsubscription confirmed for ${message.flightNumber}`);
-        }
-      } catch (error) {
-        console.error('[FlightTracker] Error parsing WebSocket message:', error);
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('[FlightTracker] WebSocket error:', error);
-    };
-
-    ws.onclose = () => {
-      console.log('[FlightTracker] WebSocket disconnected');
-    };
-
-    return () => {
-      console.log('[FlightTracker] Cleaning up WebSocket connection');
-      ws.close();
-    };
-  }, []); // Only run on mount/unmount
-
-  const handleFlightUpdate = (message) => {
-    const { flightNumber, changes, flightData } = message;
-
-    // Show browser notification
-    if ('Notification' in window && Notification.permission === 'granted') {
-      const changesText = changes.map(c => `${c.icon} ${c.field}: ${c.old} → ${c.new}`).join('\n');
-
-      const notification = new Notification(`Flight ${flightNumber} Updated`, {
-        body: changesText,
-        icon: '/flight-icon.png',
-        tag: flightNumber,
-        requireInteraction: true
-      });
-
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-      };
-    } else {
-      // Fallback to alert if notifications not available
-      const changesText = changes.map(c => `${c.icon} ${c.field}: ${c.old} → ${c.new}`).join('\n');
-      alert(`✈️ Flight ${flightNumber} Updated!\n\n${changesText}`);
-    }
-
-    // Update the subscription in localStorage with new data
-    const updated = subscribedFlights.map(sub =>
-      sub.flightNumber === flightNumber
-        ? { ...sub, lastChecked: flightData }
-        : sub
-    );
-    setSubscribedFlights(updated);
-    localStorage.setItem('subscribedFlights', JSON.stringify(updated));
-  };
+  // Note: Real-time flight monitoring removed (backend deprecated)
 
   const fetchWeatherData = async (icaoCode) => {
     console.log('[fetchWeatherData] Called with ICAO:', icaoCode);
@@ -147,8 +54,6 @@ function FlightTracker() {
 
   const fetchAircraftImage = async (registration, icao24) => {
     if (!registration && !icao24) return null;
-
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
     // Helper to parse aircraft info from Planespotters URL
     const parseAircraftFromUrl = (url) => {
@@ -200,9 +105,9 @@ function FlightTracker() {
     };
 
     try {
-      // Try Planespotters.net API via backend proxy (using hex code)
+      // Try Planespotters.net API via Vercel serverless function (using hex code)
       if (icao24) {
-        const response = await fetch(`${API_URL}/api/aircraft-photo/${icao24}?type=hex`);
+        const response = await fetch(`/api/aircraft-photo?identifier=${icao24}&type=hex`);
         if (response.ok) {
           const data = await response.json();
           console.log('[fetchAircraftImage] Planespotters data:', data);
@@ -224,7 +129,7 @@ function FlightTracker() {
 
       // Fallback to registration search
       if (registration) {
-        const response = await fetch(`${API_URL}/api/aircraft-photo/${registration}?type=reg`);
+        const response = await fetch(`/api/aircraft-photo?identifier=${registration}&type=reg`);
         if (response.ok) {
           const data = await response.json();
           console.log('[fetchAircraftImage] Planespotters data:', data);
@@ -654,64 +559,7 @@ Keep it concise but informative, around 150-200 words.`;
     return 'live';
   };
 
-  const isSubscribed = (flightNumber) => {
-    return subscribedFlights.some(f => f.flightNumber === flightNumber);
-  };
-
-  const subscribeToFlight = () => {
-    if (!flightData || !flightNumber) return;
-
-    const subscription = {
-      flightNumber: flightData.callsign || flightNumber,
-      flightDate: flightDate || new Date().toISOString().split('T')[0],
-      subscribedAt: new Date().toISOString(),
-      lastChecked: flightData,
-      route: `${flightData.estDepartureAirport} → ${flightData.estArrivalAirport}`,
-      airline: flightData.airline
-    };
-
-    const updated = [...subscribedFlights, subscription];
-    setSubscribedFlights(updated);
-    localStorage.setItem('subscribedFlights', JSON.stringify(updated));
-
-    // Send subscription to backend via WebSocket
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: 'subscribe-flight',
-        flightNumber: subscription.flightNumber,
-        flightData: flightData
-      }));
-      console.log(`[FlightTracker] Sent subscription request for ${subscription.flightNumber}`);
-    }
-
-    // Request notification permission if not granted
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          alert(`✅ Subscribed to ${subscription.flightNumber}!\n\nYou'll receive push notifications for:\n• Gate/Terminal changes\n• Status updates\n• Delays\n• Boarding announcements`);
-        } else {
-          alert(`✅ Subscribed to ${subscription.flightNumber}!\n\nNote: Enable browser notifications to receive real-time alerts.`);
-        }
-      });
-    } else {
-      alert(`✅ Subscribed to ${subscription.flightNumber}!\n\nYou'll receive push notifications for:\n• Gate/Terminal changes\n• Status updates\n• Delays\n• Boarding announcements`);
-    }
-  };
-
-  const unsubscribeFromFlight = (flightNumber) => {
-    const updated = subscribedFlights.filter(f => f.flightNumber !== flightNumber);
-    setSubscribedFlights(updated);
-    localStorage.setItem('subscribedFlights', JSON.stringify(updated));
-
-    // Send unsubscription to backend via WebSocket
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: 'unsubscribe-flight',
-        flightNumber: flightNumber
-      }));
-      console.log(`[FlightTracker] Sent unsubscription request for ${flightNumber}`);
-    }
-  };
+  // Note: Flight subscription feature removed (backend deprecated)
 
   return (
     <div className="flight-tracker">
@@ -758,36 +606,6 @@ Keep it concise but informative, around 150-200 words.`;
       {error && (
         <div className="flight-error">
           ⚠️ {error}
-        </div>
-      )}
-
-      {subscribedFlights.length > 0 && (
-        <div className="subscriptions-card glass glass-card">
-          <h3>📬 Your Flight Subscriptions</h3>
-          <p className="subscriptions-desc">You'll receive push notifications when these flights change</p>
-          <div className="subscriptions-list">
-            {subscribedFlights.map((sub, index) => (
-              <div key={index} className="subscription-item">
-                <div className="subscription-info">
-                  <div className="subscription-flight">
-                    <span className="subscription-number">{sub.flightNumber}</span>
-                    {sub.airline && <span className="subscription-airline">{sub.airline}</span>}
-                  </div>
-                  <div className="subscription-route">{sub.route}</div>
-                  <div className="subscription-date">
-                    Subscribed: {new Date(sub.subscribedAt).toLocaleDateString('no-NO')}
-                  </div>
-                </div>
-                <button
-                  className="btn-remove"
-                  onClick={() => unsubscribeFromFlight(sub.flightNumber)}
-                  title="Unsubscribe"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
@@ -925,26 +743,11 @@ Keep it concise but informative, around 150-200 words.`;
             </div>
 
             <div className="flight-actions">
-              {!isSubscribed(flightData.callsign || flightNumber) ? (
-                <button
-                  className="btn btn-primary"
-                  onClick={subscribeToFlight}
-                >
-                  🔔 Subscribe to Updates
-                </button>
-              ) : (
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => unsubscribeFromFlight(flightData.callsign || flightNumber)}
-                >
-                  ✅ Subscribed • Unsubscribe
-                </button>
-              )}
               <a
                 href={`https://www.flightradar24.com/data/flights/${flightNumber}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-secondary"
+                className="btn btn-primary"
               >
                 View on FlightRadar24 →
               </a>
