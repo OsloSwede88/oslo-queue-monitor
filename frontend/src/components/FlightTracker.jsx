@@ -72,6 +72,9 @@ function FlightTracker() {
       if (data.data && data.data.length > 0) {
         const flight = data.data[0];
 
+        // Log aircraft data to debug
+        console.log('Aircraft data:', flight.aircraft);
+
         // Convert AviationStack format to our format
         const flightInfo = {
           callsign: flight.flight?.iata || flightNumber,
@@ -94,10 +97,11 @@ function FlightTracker() {
           firstSeen: flight.departure?.scheduled ? new Date(flight.departure.scheduled).getTime() / 1000 : null,
           lastSeen: flight.arrival?.scheduled ? new Date(flight.arrival.scheduled).getTime() / 1000 : null,
 
-          // Aircraft information
-          icao24: flight.flight?.icao || flight.aircraft?.registration || 'N/A',
-          aircraftRegistration: flight.aircraft?.registration || 'N/A',
-          aircraftIcao: flight.aircraft?.iata || 'N/A',
+          // Aircraft information - try multiple fields
+          icao24: flight.aircraft?.registration || flight.aircraft?.iata || flight.aircraft?.icao || flight.flight?.icao || 'N/A',
+          aircraftRegistration: flight.aircraft?.registration || null,
+          aircraftIcao: flight.aircraft?.iata || flight.aircraft?.icao || null,
+          aircraftModel: flight.aircraft?.model || null,
 
           // Flight details
           flightStatus: flight.flight_status,
@@ -327,8 +331,12 @@ function FlightTracker() {
                   <div className="detail-content">
                     <span className="detail-label">Aircraft</span>
                     <span className="detail-value">
-                      {flightData.aircraftRegistration !== 'N/A' ? `Registration: ${flightData.aircraftRegistration}` : 'N/A'}
-                      {flightData.aircraftIcao !== 'N/A' && ` • ICAO: ${flightData.aircraftIcao}`}
+                      {flightData.aircraftRegistration ? `Registration: ${flightData.aircraftRegistration}` : ''}
+                      {flightData.aircraftRegistration && (flightData.aircraftIcao || flightData.aircraftModel) && ' • '}
+                      {flightData.aircraftIcao && `ICAO: ${flightData.aircraftIcao}`}
+                      {flightData.aircraftIcao && flightData.aircraftModel && ' • '}
+                      {flightData.aircraftModel && `Model: ${flightData.aircraftModel}`}
+                      {!flightData.aircraftRegistration && !flightData.aircraftIcao && !flightData.aircraftModel && 'Aircraft info not available (upgrade API plan for details)'}
                     </span>
                   </div>
                 </div>
