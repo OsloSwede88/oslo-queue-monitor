@@ -5,9 +5,12 @@ The Oslo Queue Monitor now includes a comprehensive flight tracking feature that
 ## Features
 
 - **Flight Search**: Search by flight number and date
-- **Real-time Data**: Uses AviationStack API for live flight tracking
+- **Real-time Data**: Uses AirLabs API for live flight tracking
 - **Weather Information**: Displays current weather at departure and arrival airports
 - **Flight Details**: Shows departure/arrival airports, times, aircraft ID, route, and flight status
+- **Aircraft Information**: AI-generated detailed information about the aircraft model, specifications, and interesting facts
+- **Aircraft Photos**: High-definition photos from Planespotters.net
+- **Flight Subscriptions**: Real-time push notifications for gate changes, delays, and status updates
 - **Direct Links**: Quick access to FlightRadar24 for more details
 
 ## API Setup
@@ -73,6 +76,38 @@ To enable weather information display:
    npm run dev
    ```
 
+### 3. OpenRouter API (Optional - FREE)
+
+To enable AI-generated aircraft information:
+
+1. **Sign up for a free account**:
+   - Visit: https://openrouter.ai/
+   - Click "Sign In" and create an account
+   - Free tier includes access to many free models
+
+2. **Get your API key**:
+   - Log in to your OpenRouter dashboard
+   - Navigate to Keys section
+   - Create a new API key
+   - Copy the key
+
+3. **Add to environment variables**:
+   ```bash
+   # In frontend/.env file:
+   VITE_OPENROUTER_API_KEY=your_actual_api_key_here
+   ```
+
+4. **Restart the dev server**:
+   ```bash
+   npm run dev
+   ```
+
+**Model Used**: google/gemini-flash-1.5 (completely free)
+
+### 4. Planespotters.net (Automatic - FREE)
+
+Aircraft photos are automatically fetched from Planespotters.net's public API - no setup required!
+
 ## Usage
 
 1. **Navigate to Flight Tracker**:
@@ -84,10 +119,13 @@ To enable weather information display:
    - Click "Track Flight"
 
 3. **View results**:
-   - Flight details (departure/arrival airports, times)
-   - Aircraft information (ICAO24 code)
+   - Flight details (departure/arrival airports, times, gates, terminals)
+   - Aircraft registration and model information
    - Route and duration
    - Weather conditions (if CheckWX API key is configured)
+   - High-definition aircraft photo (from Planespotters.net)
+   - AI-generated aircraft information (if OpenRouter API key is configured)
+   - Flight subscription option for real-time updates
 
 ## Examples
 

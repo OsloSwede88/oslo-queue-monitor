@@ -12,6 +12,9 @@ function FlightTracker() {
     const saved = localStorage.getItem('subscribedFlights');
     return saved ? JSON.parse(saved) : [];
   });
+  const [aircraftInfo, setAircraftInfo] = useState(null);
+  const [aircraftImage, setAircraftImage] = useState(null);
+  const [loadingAircraftInfo, setLoadingAircraftInfo] = useState(false);
 
   const wsRef = useRef(null);
 
@@ -131,6 +134,91 @@ function FlightTracker() {
     return null;
   };
 
+  const fetchAircraftImage = async (registration, icao24) => {
+    if (!registration && !icao24) return null;
+
+    try {
+      // Try Planespotters.net API first (using hex code)
+      if (icao24) {
+        const response = await fetch(`https://api.planespotters.net/pub/photos/hex/${icao24}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.photos && data.photos.length > 0) {
+            return {
+              url: data.photos[0].thumbnail_large.src,
+              photographer: data.photos[0].photographer,
+              link: data.photos[0].link
+            };
+          }
+        }
+      }
+
+      // Fallback to registration search
+      if (registration) {
+        const response = await fetch(`https://api.planespotters.net/pub/photos/reg/${registration}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.photos && data.photos.length > 0) {
+            return {
+              url: data.photos[0].thumbnail_large.src,
+              photographer: data.photos[0].photographer,
+              link: data.photos[0].link
+            };
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Aircraft image fetch error:', err);
+    }
+    return null;
+  };
+
+  const generateAircraftInfo = async (aircraftModel, registration, airline) => {
+    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+    if (!apiKey || apiKey === 'your_openrouter_api_key_here') {
+      console.warn('OpenRouter API key not configured. Aircraft info will not be available.');
+      return null;
+    }
+
+    try {
+      const prompt = `Provide detailed information about the ${aircraftModel || 'aircraft'} ${registration ? `with registration ${registration}` : ''} ${airline ? `operated by ${airline}` : ''}. Include:
+1. Aircraft manufacturer and full model name
+2. Key specifications (passenger capacity, range, cruising speed)
+3. First flight and when it entered service
+4. Interesting facts or notable features
+5. Common routes or operators
+
+Keep it concise but informative, around 150-200 words.`;
+
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Oslo Airport Queue Monitor'
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-flash-1.5',
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ]
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.choices[0].message.content;
+      }
+    } catch (err) {
+      console.error('Aircraft info generation error:', err);
+    }
+    return null;
+  };
+
   const searchFlight = async () => {
     if (!flightNumber.trim()) {
       setError('Please enter a flight number');
@@ -141,6 +229,8 @@ function FlightTracker() {
     setError(null);
     setFlightData(null);
     setWeatherData({ departure: null, arrival: null });
+    setAircraftInfo(null);
+    setAircraftImage(null);
 
     try {
       const apiKey = import.meta.env.VITE_AIRLABS_API_KEY;
@@ -225,6 +315,20 @@ function FlightTracker() {
         setWeatherData({
           departure: departureWeather,
           arrival: arrivalWeather
+        });
+
+        // Fetch aircraft info and image in background
+        setLoadingAircraftInfo(true);
+        Promise.all([
+          fetchAircraftImage(flightInfo.aircraftRegistration, flightInfo.icao24),
+          generateAircraftInfo(flightInfo.aircraftModel, flightInfo.aircraftRegistration, flightInfo.airline)
+        ]).then(([image, info]) => {
+          setAircraftImage(image);
+          setAircraftInfo(info);
+          setLoadingAircraftInfo(false);
+        }).catch(err => {
+          console.error('Error fetching aircraft details:', err);
+          setLoadingAircraftInfo(false);
         });
       } else {
         setError(`No flight found for ${flightNumber}. Try flight numbers like LH400, BA117, SK4035, DY1302.`);
@@ -658,6 +762,56 @@ function FlightTracker() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Aircraft Details Section */}
+          {(aircraftInfo || aircraftImage || loadingAircraftInfo) && (
+            <div className="aircraft-section">
+              <h4 className="aircraft-section-title">✈️ About This Aircraft</h4>
+
+              {loadingAircraftInfo && !aircraftInfo && !aircraftImage && (
+                <div className="aircraft-loading">
+                  <div className="spinner-small"></div>
+                  <span>Loading aircraft details...</span>
+                </div>
+              )}
+
+              {aircraftImage && (
+                <div className="aircraft-image-container">
+                  <img
+                    src={aircraftImage.url}
+                    alt="Aircraft"
+                    className="aircraft-image"
+                  />
+                  <div className="aircraft-image-credit">
+                    Photo by {aircraftImage.photographer} •
+                    <a
+                      href={aircraftImage.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="aircraft-image-link"
+                    >
+                      View on Planespotters.net
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {aircraftInfo && (
+                <div className="aircraft-info-text">
+                  <p>{aircraftInfo}</p>
+                  <div className="aircraft-info-footer">
+                    <span className="aircraft-info-badge">✨ AI-Generated Information</span>
+                  </div>
+                </div>
+              )}
+
+              {!loadingAircraftInfo && !aircraftInfo && !aircraftImage && (
+                <div className="aircraft-no-data">
+                  <p>No additional aircraft information available for this flight.</p>
+                </div>
+              )}
             </div>
           )}
         </div>

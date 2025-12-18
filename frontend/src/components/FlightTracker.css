@@ -576,3 +576,112 @@
     align-self: flex-end;
   }
 }
+
+/* Aircraft Details Section */
+.aircraft-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.aircraft-section-title {
+  font-size: 1.25rem;
+  color: var(--color-text-primary);
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+
+.aircraft-loading {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  justify-content: center;
+  color: var(--color-text-secondary);
+}
+
+.aircraft-image-container {
+  margin-bottom: 1.5rem;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+}
+
+.aircraft-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 500px;
+  object-fit: cover;
+}
+
+.aircraft-image-credit {
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.aircraft-image-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  margin-left: 0.25rem;
+  transition: opacity 0.2s;
+}
+
+.aircraft-image-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.aircraft-info-text {
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.aircraft-info-text p {
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  white-space: pre-wrap;
+}
+
+.aircraft-info-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.aircraft-info-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(157, 78, 221, 0.15);
+  color: var(--color-primary);
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid rgba(157, 78, 221, 0.3);
+}
+
+.aircraft-no-data {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+}
+
+.aircraft-no-data p {
+  margin: 0;
+}
