@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 class FlightMonitor {
   constructor() {
     this.subscriptions = new Map(); // flightNumber -> {data, subscribers}
