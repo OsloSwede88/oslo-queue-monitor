@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import './App.css';
+import FlightTracker from './components/FlightTracker';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const WS_URL = API_URL.replace('http://', 'ws://').replace('https://', 'wss://');
@@ -9,6 +10,7 @@ function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('queue');
   const [theme, setTheme] = useState(() => {
     // Get theme from localStorage or default to 'dark'
     return localStorage.getItem('theme') || 'dark';
@@ -171,7 +173,26 @@ function App() {
           </div>
         )}
 
-        <div className="queue-card">
+        <div className="tab-navigation">
+          <button
+            className={`tab-btn ${activeTab === 'queue' ? 'active' : ''}`}
+            onClick={() => setActiveTab('queue')}
+          >
+            <span className="tab-icon">⏱️</span>
+            Security Queue
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'flights' ? 'active' : ''}`}
+            onClick={() => setActiveTab('flights')}
+          >
+            <span className="tab-icon">✈️</span>
+            Flight Tracker
+          </button>
+        </div>
+
+        {activeTab === 'queue' && (
+          <>
+            <div className="queue-card">
           <div className="card-header">
             <h2>Security Checkpoint</h2>
             <p className="airport-name">Oslo Airport (OSL)</p>
@@ -257,6 +278,12 @@ function App() {
             <li>Works offline with cached data</li>
           </ul>
         </div>
+          </>
+        )}
+
+        {activeTab === 'flights' && (
+          <FlightTracker />
+        )}
       </main>
 
       <footer className="footer">
