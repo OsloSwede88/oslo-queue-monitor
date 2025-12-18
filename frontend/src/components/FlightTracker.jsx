@@ -110,28 +110,37 @@ function FlightTracker() {
   };
 
   const fetchWeatherData = async (icaoCode) => {
-    if (!icaoCode) return null;
+    console.log('[fetchWeatherData] Called with ICAO:', icaoCode);
+    if (!icaoCode) {
+      console.log('[fetchWeatherData] No ICAO code provided, returning null');
+      return null;
+    }
 
     const apiKey = import.meta.env.VITE_CHECKWX_API_KEY;
+    console.log('[fetchWeatherData] API key configured:', apiKey ? 'Yes' : 'No');
     if (!apiKey || apiKey === 'your_checkwx_api_key_here') {
-      console.warn('CheckWX API key not configured. Weather data will not be available.');
+      console.warn('[fetchWeatherData] CheckWX API key not configured. Weather data will not be available.');
       return null;
     }
 
     try {
+      const url = `https://api.checkwx.com/metar/${icaoCode}/decoded`;
+      console.log('[fetchWeatherData] Fetching from:', url);
       // Use CheckWX API for METAR data (free, 3000 requests/day)
-      const response = await fetch(`https://api.checkwx.com/metar/${icaoCode}/decoded`, {
+      const response = await fetch(url, {
         headers: {
           'X-API-Key': apiKey
         }
       });
 
+      console.log('[fetchWeatherData] Response status:', response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log('[fetchWeatherData] Response data:', data);
         return data.data?.[0] || null;
       }
     } catch (err) {
-      console.error('Weather fetch error:', err);
+      console.error('[fetchWeatherData] Error:', err);
     }
     return null;
   };
@@ -307,6 +316,56 @@ Keep it concise but informative, around 150-200 words.`;
     }
   };
 
+  const iataToIcao = (iataCode) => {
+    // Comprehensive IATA to ICAO mapping for Norwegian and major European airports
+    const iataIcaoMap = {
+      // Norway
+      'OSL': 'ENGM', // Oslo Gardermoen
+      'BGO': 'ENBR', // Bergen Flesland
+      'TRD': 'ENVA', // Trondheim Værnes
+      'SVG': 'ENZV', // Stavanger Sola
+      'TOS': 'ENTC', // Tromsø Langnes
+      'BOO': 'ENBO', // Bodø
+      'KRS': 'ENCN', // Kristiansand Kjevik
+      'AES': 'ENAL', // Ålesund Vigra
+      'TRF': 'ENSR', // Sandefjord Torp
+      'HAU': 'ENHD', // Haugesund Karmøy
+      'MOL': 'ENML', // Molde Årø
+      'KKN': 'ENKB', // Kirkenes
+      'EVE': 'ENEV', // Harstad/Narvik Evenes
+      'LKL': 'ENLK', // Lakselv Banak
+
+      // Scandinavia
+      'CPH': 'EKCH', // Copenhagen
+      'ARN': 'ESSA', // Stockholm Arlanda
+      'GOT': 'ESGG', // Gothenburg Landvetter
+      'HEL': 'EFHK', // Helsinki
+      'RKV': 'BIRK', // Reykjavik
+      'KEF': 'BIKF', // Keflavik
+
+      // Europe Major
+      'LHR': 'EGLL', // London Heathrow
+      'LGW': 'EGKK', // London Gatwick
+      'CDG': 'LFPG', // Paris Charles de Gaulle
+      'AMS': 'EHAM', // Amsterdam Schiphol
+      'FRA': 'EDDF', // Frankfurt
+      'MUC': 'EDDM', // Munich
+      'BCN': 'LEBL', // Barcelona
+      'MAD': 'LEMD', // Madrid
+      'FCO': 'LIRF', // Rome Fiumicino
+      'ZRH': 'LSZH', // Zurich
+      'VIE': 'LOWW', // Vienna
+      'BRU': 'EBBR', // Brussels
+      'DUB': 'EIDW', // Dublin
+      'PRG': 'LKPR', // Prague
+      'WAW': 'EPWA', // Warsaw
+
+      // Add more as needed
+    };
+
+    return iataIcaoMap[iataCode] || iataCode; // Return ICAO if found, otherwise return original
+  };
+
   const normalizeAirportName = (airportName, iataCode) => {
     // Map Norwegian airport technical names to city names
     const norwegianAirportMappings = {
@@ -474,11 +533,22 @@ Keep it concise but informative, around 150-200 words.`;
 
         setFlightData(flightInfo);
 
-        // Fetch weather data
+        // Fetch weather data (convert IATA to ICAO codes)
+        const depIcao = iataToIcao(flightInfo.estDepartureAirport);
+        const arrIcao = iataToIcao(flightInfo.estArrivalAirport);
+        console.log('[FlightTracker] Fetching weather data for:', {
+          departure: `${flightInfo.estDepartureAirport} (${depIcao})`,
+          arrival: `${flightInfo.estArrivalAirport} (${arrIcao})`
+        });
         const [departureWeather, arrivalWeather] = await Promise.all([
-          fetchWeatherData(flightInfo.estDepartureAirport),
-          fetchWeatherData(flightInfo.estArrivalAirport)
+          fetchWeatherData(depIcao),
+          fetchWeatherData(arrIcao)
         ]);
+
+        console.log('[FlightTracker] Weather data received:', {
+          departure: departureWeather,
+          arrival: arrivalWeather
+        });
 
         setWeatherData({
           departure: departureWeather,
