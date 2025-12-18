@@ -21,8 +21,9 @@ AirLabs provides real-time flight tracking data with a generous free tier.
 
 - **API**: AirLabs
 - **Cost**: Free tier available
-- **Limits**: 1,000 requests per month (free tier) - 10x more than AviationStack!
+- **Limits**: 1,000 requests per month (free tier)
 - **Documentation**: https://airlabs.co/docs/
+- **Note**: Free tier doesn't include aircraft registration data for most flights
 
 **Setup Instructions:**
 
@@ -50,6 +51,43 @@ AirLabs provides real-time flight tracking data with a generous free tier.
    ```bash
    npm run dev
    ```
+
+### 1.5 AviationStack API (Optional Fallback - FREE)
+
+**Hybrid Strategy**: AviationStack is used as a fallback ONLY when AirLabs doesn't provide aircraft registration data. This maximizes your free tier usage!
+
+- **API**: AviationStack
+- **Cost**: Free tier available
+- **Limits**: 100 requests per month (free tier)
+- **Documentation**: https://aviationstack.com/documentation
+- **Used For**: Aircraft registration data when AirLabs returns null
+
+**Setup Instructions:**
+
+1. **Sign up for a free account**:
+   - Visit: https://aviationstack.com/
+   - Click "Get Free API Key"
+   - Create an account
+
+2. **Get your API key**:
+   - Log in to your AviationStack dashboard
+   - Copy your API Access Key
+
+3. **Add to environment variables**:
+   ```bash
+   # In frontend/.env file:
+   VITE_AVIATIONSTACK_API_KEY=your_actual_api_key_here
+   ```
+
+4. **Restart the dev server**:
+   ```bash
+   npm run dev
+   ```
+
+**How it works**:
+- Primary: AirLabs API (fast, 1000 req/month)
+- Fallback: Only when aircraft data is missing, AviationStack is called (100 req/month)
+- This hybrid approach maximizes your free tier limits!
 
 ### 2. CheckWX Weather API (Optional - FREE)
 
@@ -102,7 +140,7 @@ To enable AI-generated aircraft information:
    npm run dev
    ```
 
-**Model Used**: google/gemini-flash-1.5 (completely free)
+**Model Used**: google/gemini-2.0-flash-exp:free (completely free)
 
 ### 4. Planespotters.net (Automatic - FREE)
 
@@ -174,12 +212,15 @@ Potential features to add:
 
 ## API Costs
 
-| API | Free Tier | Cost Beyond Free |
-|-----|-----------|------------------|
-| AirLabs | 1,000 req/month | $49/month for 25,000 req/month |
-| CheckWX Weather | 3,000 req/day | $10/month for 10,000/day |
+| API | Free Tier | Cost Beyond Free | Usage |
+|-----|-----------|------------------|-------|
+| AirLabs | 1,000 req/month | $49/month for 25,000 req/month | Primary flight tracking |
+| AviationStack | 100 req/month | $49.99/month for 10,000 req/month | Fallback for aircraft data only |
+| CheckWX Weather | 3,000 req/day | $10/month for 10,000/day | Weather information |
+| OpenRouter (Gemini) | Free | Free | AI-generated aircraft info |
+| Planespotters.net | Free | Free | Aircraft photos |
 
-**Note**: The free tier of 1,000 requests/month for AirLabs is very generous for personal use. You can track ~30 flights per day and stay within the limit!
+**Note**: The hybrid approach (AirLabs + AviationStack fallback) ensures you get the best data while staying within free tier limits. AirLabs handles most requests (1,000/month), and AviationStack is only called when aircraft data is missing (~100/month).
 
 ## Privacy
 

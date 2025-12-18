@@ -156,6 +156,35 @@ app.post('/api/subscribe', (req, res) => {
   res.json({ success: true, message: 'Subscription saved' });
 });
 
+// Planespotters proxy endpoint (to bypass CORS)
+app.get('/api/aircraft-photo/:identifier', async (req, res) => {
+  const { identifier } = req.params;
+  const { type } = req.query; // 'hex' or 'reg'
+
+  try {
+    const endpoint = type === 'reg'
+      ? `https://api.planespotters.net/pub/photos/reg/${identifier}`
+      : `https://api.planespotters.net/pub/photos/hex/${identifier}`;
+
+    console.log(`[Server] Proxying Planespotters request: ${endpoint}`);
+
+    const response = await fetch(endpoint);
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: 'Planespotters API error',
+        status: response.status
+      });
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('[Server] Planespotters proxy error:', error);
+    res.status(500).json({ error: 'Failed to fetch aircraft photo' });
+  }
+});
+
 // Graceful shutdown
 async function shutdown() {
   console.log('[Server] Shutting down...');

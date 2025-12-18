@@ -137,17 +137,47 @@ function FlightTracker() {
   const fetchAircraftImage = async (registration, icao24) => {
     if (!registration && !icao24) return null;
 
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+    // Helper to parse aircraft info from Planespotters URL
+    const parseAircraftFromUrl = (url) => {
+      try {
+        // URL format: https://www.planespotters.net/photo/{id}/{registration}-{airline}-{aircraft-type}
+        const match = url.match(/\/photo\/\d+\/([a-z0-9-]+)-([a-z0-9-]+)-([a-z0-9-]+)/i);
+        if (match) {
+          const reg = match[1].toUpperCase();
+          const aircraftModel = match[3]
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+
+          console.log('[fetchAircraftImage] Parsed from URL:', { registration: reg, model: aircraftModel });
+          return { registration: reg, aircraftType: aircraftModel };
+        }
+      } catch (err) {
+        console.error('[fetchAircraftImage] Error parsing URL:', err);
+      }
+      return { registration: null, aircraftType: null };
+    };
+
     try {
-      // Try Planespotters.net API first (using hex code)
+      // Try Planespotters.net API via backend proxy (using hex code)
       if (icao24) {
-        const response = await fetch(`https://api.planespotters.net/pub/photos/hex/${icao24}`);
+        const response = await fetch(`${API_URL}/api/aircraft-photo/${icao24}?type=hex`);
         if (response.ok) {
           const data = await response.json();
+          console.log('[fetchAircraftImage] Planespotters data:', data);
           if (data.photos && data.photos.length > 0) {
+            const photo = data.photos[0];
+            const parsed = parseAircraftFromUrl(photo.link);
+
             return {
-              url: data.photos[0].thumbnail_large.src,
-              photographer: data.photos[0].photographer,
-              link: data.photos[0].link
+              url: photo.thumbnail_large.src,
+              photographer: photo.photographer,
+              link: photo.link,
+              registration: parsed.registration || registration,
+              aircraftType: parsed.aircraftType,
+              aircraftIcao: null
             };
           }
         }
@@ -155,14 +185,21 @@ function FlightTracker() {
 
       // Fallback to registration search
       if (registration) {
-        const response = await fetch(`https://api.planespotters.net/pub/photos/reg/${registration}`);
+        const response = await fetch(`${API_URL}/api/aircraft-photo/${registration}?type=reg`);
         if (response.ok) {
           const data = await response.json();
+          console.log('[fetchAircraftImage] Planespotters data:', data);
           if (data.photos && data.photos.length > 0) {
+            const photo = data.photos[0];
+            const parsed = parseAircraftFromUrl(photo.link);
+
             return {
-              url: data.photos[0].thumbnail_large.src,
-              photographer: data.photos[0].photographer,
-              link: data.photos[0].link
+              url: photo.thumbnail_large.src,
+              photographer: photo.photographer,
+              link: photo.link,
+              registration: parsed.registration || registration,
+              aircraftType: parsed.aircraftType,
+              aircraftIcao: null
             };
           }
         }
@@ -174,9 +211,13 @@ function FlightTracker() {
   };
 
   const generateAircraftInfo = async (aircraftModel, registration, airline) => {
+    console.log('[generateAircraftInfo] Called with:', { aircraftModel, registration, airline });
+
     const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+    console.log('[generateAircraftInfo] API key configured:', apiKey ? 'Yes' : 'No');
+
     if (!apiKey || apiKey === 'your_openrouter_api_key_here') {
-      console.warn('OpenRouter API key not configured. Aircraft info will not be available.');
+      console.warn('[generateAircraftInfo] OpenRouter API key not configured. Aircraft info will not be available.');
       return null;
     }
 
@@ -190,6 +231,9 @@ function FlightTracker() {
 
 Keep it concise but informative, around 150-200 words.`;
 
+      console.log('[generateAircraftInfo] Prompt:', prompt);
+      console.log('[generateAircraftInfo] Making API call to OpenRouter...');
+
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -199,7 +243,7 @@ Keep it concise but informative, around 150-200 words.`;
           'X-Title': 'Oslo Airport Queue Monitor'
         },
         body: JSON.stringify({
-          model: 'google/gemini-flash-1.5',
+          model: 'openai/gpt-oss-120b',
           messages: [
             {
               role: 'user',
@@ -209,14 +253,28 @@ Keep it concise but informative, around 150-200 words.`;
         })
       });
 
+      console.log('[generateAircraftInfo] Response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
-        return data.choices[0].message.content;
+        console.log('[generateAircraftInfo] Response data:', data);
+        const content = data.choices[0].message.content;
+        console.log('[generateAircraftInfo] Returning content length:', content ? content.length : 0);
+        return content;
+      } else if (response.status === 429) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[generateAircraftInfo] Rate limit error (429):', errorData);
+        console.warn('[generateAircraftInfo] OpenRouter rate limited. Try again in a few seconds.');
+        return null;
+      } else {
+        const errorText = await response.text();
+        console.error('[generateAircraftInfo] API error response:', errorText);
+        return null;
       }
     } catch (err) {
-      console.error('Aircraft info generation error:', err);
+      console.error('[generateAircraftInfo] Exception caught:', err);
+      return null;
     }
-    return null;
   };
 
   const normalizeAirportName = (airportName, iataCode) => {
@@ -327,6 +385,61 @@ Keep it concise but informative, around 150-200 words.`;
           arrivalDelay: null
         };
 
+        // If AirLabs doesn't have aircraft data, try AviationStack as fallback
+        if (!flightInfo.aircraftRegistration && !flightInfo.aircraftModel) {
+          console.log('[FlightTracker] No aircraft data from AirLabs, trying AviationStack fallback...');
+          const aviationStackKey = import.meta.env.VITE_AVIATIONSTACK_API_KEY;
+
+          if (aviationStackKey && aviationStackKey !== 'your_aviationstack_api_key_here') {
+            try {
+              const asResponse = await fetch(
+                `https://api.aviationstack.com/v1/flights?access_key=${aviationStackKey}&flight_iata=${flightNumber.toUpperCase()}`
+              );
+
+              if (asResponse.ok) {
+                const asData = await asResponse.json();
+                console.log('[FlightTracker] AviationStack response:', asData);
+
+                if (asData.data && asData.data.length > 0) {
+                  const asFlight = asData.data[0];
+                  console.log('[FlightTracker] AviationStack aircraft object:', asFlight.aircraft);
+
+                  // Update flightInfo with AviationStack aircraft data
+                  if (asFlight.aircraft) {
+                    // Get hex code (icao24) - this is what we need for photos!
+                    if (asFlight.aircraft.icao24) {
+                      flightInfo.icao24 = asFlight.aircraft.icao24;
+                    }
+                    // Get registration if available
+                    if (asFlight.aircraft.registration) {
+                      flightInfo.aircraftRegistration = asFlight.aircraft.registration;
+                    }
+                    // Get aircraft type codes
+                    if (asFlight.aircraft.iata) {
+                      flightInfo.aircraftIcao = asFlight.aircraft.iata;
+                      flightInfo.aircraftModel = asFlight.aircraft.iata;
+                    }
+                    if (asFlight.aircraft.icao) {
+                      flightInfo.aircraftIcao = asFlight.aircraft.icao;
+                    }
+
+                    console.log('[FlightTracker] Updated aircraft data from AviationStack:', {
+                      icao24: flightInfo.icao24,
+                      registration: flightInfo.aircraftRegistration,
+                      icao: flightInfo.aircraftIcao,
+                      model: flightInfo.aircraftModel
+                    });
+                  }
+                }
+              }
+            } catch (err) {
+              console.log('[FlightTracker] AviationStack fallback failed:', err.message);
+            }
+          } else {
+            console.log('[FlightTracker] AviationStack API key not configured, skipping fallback');
+          }
+        }
+
         setFlightData(flightInfo);
 
         // Fetch weather data
@@ -353,6 +466,22 @@ Keep it concise but informative, around 150-200 words.`;
         ]).then(([image, info]) => {
           console.log('[FlightTracker] Aircraft image result:', image);
           console.log('[FlightTracker] Aircraft info result:', info);
+
+          // If Planespotters returned aircraft info, update flightData
+          if (image && (image.registration || image.aircraftType || image.aircraftIcao)) {
+            setFlightData(prevData => ({
+              ...prevData,
+              aircraftRegistration: image.registration || prevData.aircraftRegistration,
+              aircraftModel: image.aircraftType || prevData.aircraftModel,
+              aircraftIcao: image.aircraftIcao || prevData.aircraftIcao
+            }));
+            console.log('[FlightTracker] Updated flight data with Planespotters info:', {
+              registration: image.registration,
+              model: image.aircraftType,
+              icao: image.aircraftIcao
+            });
+          }
+
           setAircraftImage(image);
           setAircraftInfo(info);
           setLoadingAircraftInfo(false);
@@ -651,10 +780,11 @@ Keep it concise but informative, around 150-200 words.`;
                     <span className="detail-value">
                       {flightData.aircraftRegistration ? `Registration: ${flightData.aircraftRegistration}` : ''}
                       {flightData.aircraftRegistration && (flightData.aircraftIcao || flightData.aircraftModel) && ' • '}
-                      {flightData.aircraftIcao && `ICAO: ${flightData.aircraftIcao}`}
+                      {flightData.aircraftIcao && `Type: ${flightData.aircraftIcao}`}
                       {flightData.aircraftIcao && flightData.aircraftModel && ' • '}
                       {flightData.aircraftModel && `Model: ${flightData.aircraftModel}`}
-                      {!flightData.aircraftRegistration && !flightData.aircraftIcao && !flightData.aircraftModel && 'Not available'}
+                      {!flightData.aircraftRegistration && !flightData.aircraftIcao && !flightData.aircraftModel && flightData.icao24 && flightData.icao24 !== 'N/A' && 'Aircraft identified (limited data)'}
+                      {!flightData.aircraftRegistration && !flightData.aircraftIcao && !flightData.aircraftModel && (!flightData.icao24 || flightData.icao24 === 'N/A') && 'Not available'}
                     </span>
                   </div>
                 </div>
