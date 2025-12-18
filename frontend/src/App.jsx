@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import './App.css';
-import 'pulltorefreshjs/dist/index.css';
 import FlightTracker from './components/FlightTracker';
 import PullToRefresh from 'pulltorefreshjs';
 
