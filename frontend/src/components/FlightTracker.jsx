@@ -77,12 +77,42 @@ function FlightTracker() {
           callsign: flight.flight?.iata || flightNumber,
           estDepartureAirport: flight.departure?.iata || 'N/A',
           estArrivalAirport: flight.arrival?.iata || 'N/A',
+          departureAirportName: flight.departure?.airport || 'N/A',
+          arrivalAirportName: flight.arrival?.airport || 'N/A',
+
+          // Departure times
+          scheduledDeparture: flight.departure?.scheduled || null,
+          estimatedDeparture: flight.departure?.estimated || null,
+          actualDeparture: flight.departure?.actual || null,
+
+          // Arrival times
+          scheduledArrival: flight.arrival?.scheduled || null,
+          estimatedArrival: flight.arrival?.estimated || null,
+          actualArrival: flight.arrival?.actual || null,
+
+          // Legacy fields for compatibility
           firstSeen: flight.departure?.scheduled ? new Date(flight.departure.scheduled).getTime() / 1000 : null,
           lastSeen: flight.arrival?.scheduled ? new Date(flight.arrival.scheduled).getTime() / 1000 : null,
+
+          // Aircraft information
           icao24: flight.flight?.icao || flight.aircraft?.registration || 'N/A',
+          aircraftRegistration: flight.aircraft?.registration || 'N/A',
+          aircraftIcao: flight.aircraft?.iata || 'N/A',
+
+          // Flight details
           flightStatus: flight.flight_status,
           airline: flight.airline?.name,
-          aircraft: flight.aircraft?.registration
+          airlineIata: flight.airline?.iata,
+
+          // Terminal/Gate info
+          departureTerminal: flight.departure?.terminal || null,
+          departureGate: flight.departure?.gate || null,
+          arrivalTerminal: flight.arrival?.terminal || null,
+          arrivalGate: flight.arrival?.gate || null,
+
+          // Delay info
+          departureDelay: flight.departure?.delay || null,
+          arrivalDelay: flight.arrival?.delay || null
         };
 
         setFlightData(flightInfo);
@@ -117,6 +147,28 @@ function FlightTracker() {
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return 'N/A';
     return new Date(timestamp * 1000).toLocaleString('no-NO');
+  };
+
+  const formatTime = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleString('no-NO', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getStatusColor = (status) => {
+    if (!status) return 'live';
+    const s = status.toLowerCase();
+    if (s === 'active' || s === 'scheduled') return 'live';
+    if (s === 'landed') return 'landed';
+    if (s === 'cancelled') return 'cancelled';
+    if (s.includes('delay')) return 'delayed';
+    return 'live';
   };
 
   return (
@@ -170,17 +222,32 @@ function FlightTracker() {
         <div className="flight-results">
           <div className="flight-card">
             <div className="flight-card-header">
-              <h3>{flightData.callsign?.trim() || 'Unknown Flight'}</h3>
-              <span className="flight-status live">🟢 Live</span>
+              <div>
+                <h3>{flightData.callsign?.trim() || 'Unknown Flight'}</h3>
+                {flightData.airline && (
+                  <p className="airline-name">{flightData.airline} {flightData.airlineIata && `(${flightData.airlineIata})`}</p>
+                )}
+              </div>
+              <span className={`flight-status ${getStatusColor(flightData.flightStatus)}`}>
+                {flightData.flightStatus === 'active' && '🟢 Live'}
+                {flightData.flightStatus === 'scheduled' && '🔵 Scheduled'}
+                {flightData.flightStatus === 'landed' && '⚪ Landed'}
+                {flightData.flightStatus === 'cancelled' && '🔴 Cancelled'}
+                {!flightData.flightStatus && '🟢 Live'}
+              </span>
             </div>
 
             <div className="flight-details">
+              {/* Route */}
               <div className="flight-detail-row">
                 <div className="detail-item">
                   <span className="detail-icon">🛫</span>
                   <div className="detail-content">
                     <span className="detail-label">Departure</span>
                     <span className="detail-value">{flightData.estDepartureAirport || 'N/A'}</span>
+                    {flightData.departureAirportName && flightData.departureAirportName !== 'N/A' && (
+                      <span className="detail-subtext">{flightData.departureAirportName}</span>
+                    )}
                   </div>
                 </div>
                 <div className="detail-item">
@@ -188,38 +255,84 @@ function FlightTracker() {
                   <div className="detail-content">
                     <span className="detail-label">Arrival</span>
                     <span className="detail-value">{flightData.estArrivalAirport || 'N/A'}</span>
+                    {flightData.arrivalAirportName && flightData.arrivalAirportName !== 'N/A' && (
+                      <span className="detail-subtext">{flightData.arrivalAirportName}</span>
+                    )}
                   </div>
                 </div>
               </div>
 
+              {/* Departure Times */}
               <div className="flight-detail-row">
                 <div className="detail-item">
-                  <span className="detail-icon">⏰</span>
+                  <span className="detail-icon">🕐</span>
                   <div className="detail-content">
-                    <span className="detail-label">First Seen</span>
-                    <span className="detail-value">{formatTimestamp(flightData.firstSeen)}</span>
+                    <span className="detail-label">Scheduled Departure</span>
+                    <span className="detail-value">{formatTime(flightData.scheduledDeparture)}</span>
+                    {flightData.departureDelay && (
+                      <span className="detail-delay">Delayed {flightData.departureDelay} min</span>
+                    )}
                   </div>
                 </div>
                 <div className="detail-item">
                   <span className="detail-icon">🕐</span>
                   <div className="detail-content">
-                    <span className="detail-label">Last Seen</span>
-                    <span className="detail-value">{formatTimestamp(flightData.lastSeen)}</span>
+                    <span className="detail-label">Scheduled Arrival</span>
+                    <span className="detail-value">{formatTime(flightData.scheduledArrival)}</span>
+                    {flightData.arrivalDelay && (
+                      <span className="detail-delay">Delayed {flightData.arrivalDelay} min</span>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {flightData.icao24 && (
+              {/* Terminal & Gate */}
+              {(flightData.departureTerminal || flightData.departureGate || flightData.arrivalTerminal || flightData.arrivalGate) && (
                 <div className="flight-detail-row">
-                  <div className="detail-item full-width">
-                    <span className="detail-icon">📡</span>
-                    <div className="detail-content">
-                      <span className="detail-label">Aircraft ID (ICAO24)</span>
-                      <span className="detail-value">{flightData.icao24.toUpperCase()}</span>
+                  {(flightData.departureTerminal || flightData.departureGate) && (
+                    <div className="detail-item">
+                      <span className="detail-icon">🚪</span>
+                      <div className="detail-content">
+                        <span className="detail-label">Departure Terminal/Gate</span>
+                        <span className="detail-value">
+                          {flightData.departureTerminal && `Terminal ${flightData.departureTerminal}`}
+                          {flightData.departureTerminal && flightData.departureGate && ', '}
+                          {flightData.departureGate && `Gate ${flightData.departureGate}`}
+                          {!flightData.departureTerminal && !flightData.departureGate && 'N/A'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  )}
+                  {(flightData.arrivalTerminal || flightData.arrivalGate) && (
+                    <div className="detail-item">
+                      <span className="detail-icon">🚪</span>
+                      <div className="detail-content">
+                        <span className="detail-label">Arrival Terminal/Gate</span>
+                        <span className="detail-value">
+                          {flightData.arrivalTerminal && `Terminal ${flightData.arrivalTerminal}`}
+                          {flightData.arrivalTerminal && flightData.arrivalGate && ', '}
+                          {flightData.arrivalGate && `Gate ${flightData.arrivalGate}`}
+                          {!flightData.arrivalTerminal && !flightData.arrivalGate && 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* Aircraft Information */}
+              <div className="flight-detail-row">
+                <div className="detail-item full-width">
+                  <span className="detail-icon">✈️</span>
+                  <div className="detail-content">
+                    <span className="detail-label">Aircraft</span>
+                    <span className="detail-value">
+                      {flightData.aircraftRegistration !== 'N/A' ? `Registration: ${flightData.aircraftRegistration}` : 'N/A'}
+                      {flightData.aircraftIcao !== 'N/A' && ` • ICAO: ${flightData.aircraftIcao}`}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="flight-actions">
