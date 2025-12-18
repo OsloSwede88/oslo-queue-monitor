@@ -3,6 +3,7 @@ import cors from 'cors';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import AvinorScraper from './scraper.js';
+import FlightMonitor from './flightMonitor.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.use(express.json());
 
 // State
 const scraper = new AvinorScraper();
+const flightMonitor = new FlightMonitor();
 let currentQueueData = null;
 let scrapeTimer = null;
 
@@ -37,14 +39,41 @@ wss.on('connection', (ws) => {
     ws.send(JSON.stringify({ type: 'queue-update', data: currentQueueData }));
   }
 
+  // Handle incoming messages
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message.toString());
+
+      if (data.type === 'subscribe-flight') {
+        console.log(`[WebSocket] Subscribe request for flight ${data.flightNumber}`);
+        flightMonitor.addSubscription(data.flightNumber, ws, data.flightData);
+        ws.send(JSON.stringify({
+          type: 'subscription-confirmed',
+          flightNumber: data.flightNumber
+        }));
+      } else if (data.type === 'unsubscribe-flight') {
+        console.log(`[WebSocket] Unsubscribe request for flight ${data.flightNumber}`);
+        flightMonitor.removeSubscription(data.flightNumber, ws);
+        ws.send(JSON.stringify({
+          type: 'unsubscription-confirmed',
+          flightNumber: data.flightNumber
+        }));
+      }
+    } catch (error) {
+      console.error('[WebSocket] Error handling message:', error.message);
+    }
+  });
+
   ws.on('close', () => {
     console.log('[WebSocket] Client disconnected');
     clients.delete(ws);
+    flightMonitor.removeClient(ws);
   });
 
   ws.on('error', (error) => {
     console.error('[WebSocket] Error:', error.message);
     clients.delete(ws);
+    flightMonitor.removeClient(ws);
   });
 });
 
@@ -134,6 +163,8 @@ async function shutdown() {
   if (scrapeTimer) {
     clearInterval(scrapeTimer);
   }
+
+  flightMonitor.stopMonitoring();
 
   await scraper.close();
 
