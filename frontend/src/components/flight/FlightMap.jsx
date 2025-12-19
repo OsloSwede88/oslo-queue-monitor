@@ -4,82 +4,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './FlightMap.css';
 
-// OpenSky Network API - Use serverless proxy to handle OAuth securely
-const OPENSKY_PROXY = '/api/opensky-proxy';
-
-// Transform OpenSky state vector to our flight format
-const transformOpenSkyData = (states) => {
-  if (!states) return [];
-
-  return states
-    .filter(state => {
-      // Filter out flights on ground and null positions
-      const onGround = state[8];
-      const lat = state[6];
-      const lon = state[5];
-      return !onGround && lat !== null && lon !== null;
-    })
-    .map(state => {
-      const [
-        icao24,           // [0] ICAO24 hex
-        callsign,         // [1] Callsign
-        origin_country,   // [2] Country
-        time_position,    // [3] Time position
-        last_contact,     // [4] Last contact
-        longitude,        // [5] Longitude
-        latitude,         // [6] Latitude
-        baro_altitude,    // [7] Barometric altitude (meters)
-        on_ground,        // [8] On ground
-        velocity,         // [9] Velocity (m/s)
-        true_track,       // [10] True track (degrees)
-        vertical_rate,    // [11] Vertical rate (m/s)
-        sensors,          // [12] Sensors
-        geo_altitude,     // [13] Geometric altitude (meters)
-        squawk,           // [14] Squawk code
-        spi,              // [15] SPI
-        position_source   // [16] Position source
-      ] = state;
-
-      return {
-        // Unique ID
-        fr24_id: icao24 || `os-${Math.random()}`,
-
-        // Flight info
-        flight: callsign?.trim() || null,
-        callsign: callsign?.trim() || null,
-
-        // Position
-        lat: latitude,
-        lon: longitude,
-        alt: baro_altitude ? Math.round(baro_altitude * 3.28084) : 0, // meters to feet
-        track: true_track || 0,
-
-        // Speed
-        gspeed: velocity ? Math.round(velocity * 1.94384) : 0, // m/s to knots
-        vspeed: vertical_rate ? Math.round(vertical_rate * 196.85) : 0, // m/s to ft/min
-
-        // Aircraft
-        hex: icao24?.toUpperCase() || null,
-        squawk: squawk || null,
-
-        // Metadata
-        source: 'OpenSky',
-        timestamp: new Date(last_contact * 1000).toISOString(),
-        origin_country: origin_country || null,
-
-        // Placeholders (OpenSky doesn't provide these)
-        type: null,
-        reg: null,
-        painted_as: null,
-        operating_as: null,
-        orig_iata: null,
-        orig_icao: null,
-        dest_iata: null,
-        dest_icao: null,
-        eta: null
-      };
-    });
-};
+// FlightRadar24 API - Use serverless proxy to keep token secure
+const FR24_PROXY = '/api/flightradar24-proxy';
 
 // Component to handle map bounds changes and fetch flights
 function FlightsLayer({ onFlightsUpdate, onStatusUpdate, refreshTrigger }) {
@@ -154,19 +80,20 @@ function FlightsLayer({ onFlightsUpdate, onStatusUpdate, refreshTrigger }) {
       }
 
       try {
-        // Use serverless proxy to handle OAuth authentication securely
-        const url = `${OPENSKY_PROXY}?lamin=${bounds.south}&lomin=${bounds.west}&lamax=${bounds.north}&lomax=${bounds.east}`;
+        // FlightRadar24 bounds format: north,south,west,east
+        const boundsStr = `${bounds.north},${bounds.south},${bounds.west},${bounds.east}`;
+        const url = `${FR24_PROXY}?bounds=${boundsStr}`;
 
-        console.log('[OpenSky] Fetching flights via proxy:', url);
+        console.log('[FR24] Fetching flights via proxy:', url);
         if (onStatusUpdate) onStatusUpdate('Loading...');
         lastFetchRef.current = now;
 
         const response = await fetch(url);
 
-        console.log('[OpenSky] Response status:', response.status);
+        console.log('[FR24] Response status:', response.status);
 
         if (response.status === 429) {
-          console.warn('[OpenSky] Rate limited (429). Daily limit may be reached.');
+          console.warn('[FR24] Rate limited (429).');
           if (onStatusUpdate) onStatusUpdate('Rate limited - try later');
           onFlightsUpdate([]);
           return;
@@ -174,18 +101,18 @@ function FlightsLayer({ onFlightsUpdate, onStatusUpdate, refreshTrigger }) {
 
         if (response.ok) {
           const data = await response.json();
-          const flights = transformOpenSkyData(data.states);
-          console.log(`[OpenSky] ✅ Received ${flights.length} flights`);
+          const flights = data.data || [];
+          console.log(`[FR24] ✅ Received ${flights.length} flights`);
           if (onStatusUpdate) onStatusUpdate(null);
           onFlightsUpdate(flights);
         } else {
           const errorText = await response.text();
-          console.error('[OpenSky] ❌ API error:', response.status, errorText);
+          console.error('[FR24] ❌ API error:', response.status, errorText);
           if (onStatusUpdate) onStatusUpdate(`Error: ${response.status}`);
           onFlightsUpdate([]);
         }
       } catch (error) {
-        console.error('[OpenSky] ❌ Error fetching flights:', error);
+        console.error('[FR24] ❌ Error fetching flights:', error);
         if (onStatusUpdate) onStatusUpdate('Connection error');
         onFlightsUpdate([]);
       }
@@ -217,17 +144,18 @@ function FlightsLayer({ onFlightsUpdate, onStatusUpdate, refreshTrigger }) {
       }
 
       try {
-        const url = `${OPENSKY_PROXY}?lamin=${bounds.south}&lomin=${bounds.west}&lamax=${bounds.north}&lomax=${bounds.east}`;
-        console.log('[OpenSky] Manual refresh via proxy:', url);
+        const boundsStr = `${bounds.north},${bounds.south},${bounds.west},${bounds.east}`;
+        const url = `${FR24_PROXY}?bounds=${boundsStr}`;
+        console.log('[FR24] Manual refresh via proxy:', url);
         if (onStatusUpdate) onStatusUpdate('Loading...');
         lastFetchRef.current = now;
 
         const response = await fetch(url);
 
-        console.log('[OpenSky] Manual refresh response:', response.status);
+        console.log('[FR24] Manual refresh response:', response.status);
 
         if (response.status === 429) {
-          console.warn('[OpenSky] ❌ Rate limited (429)');
+          console.warn('[FR24] ❌ Rate limited (429)');
           if (onStatusUpdate) onStatusUpdate('Rate limited - try later');
           onFlightsUpdate([]);
           return;
@@ -235,18 +163,18 @@ function FlightsLayer({ onFlightsUpdate, onStatusUpdate, refreshTrigger }) {
 
         if (response.ok) {
           const data = await response.json();
-          const flights = transformOpenSkyData(data.states);
-          console.log(`[OpenSky] ✅ Manual refresh: ${flights.length} flights`);
+          const flights = data.data || [];
+          console.log(`[FR24] ✅ Manual refresh: ${flights.length} flights`);
           if (onStatusUpdate) onStatusUpdate(null);
           onFlightsUpdate(flights);
         } else {
           const errorText = await response.text();
-          console.error('[OpenSky] ❌ API error:', response.status, errorText);
+          console.error('[FR24] ❌ API error:', response.status, errorText);
           if (onStatusUpdate) onStatusUpdate(`Error: ${response.status}`);
           onFlightsUpdate([]);
         }
       } catch (error) {
-        console.error('[OpenSky] ❌ Error:', error);
+        console.error('[FR24] ❌ Error:', error);
         if (onStatusUpdate) onStatusUpdate('Connection error');
         onFlightsUpdate([]);
       }
@@ -414,7 +342,7 @@ function FlightMap({ onFlightSelect }) {
         )}
         {!status && (
           <span className="data-source">
-            Data: OpenSky Network
+            Data: FlightRadar24
           </span>
         )}
       </div>
