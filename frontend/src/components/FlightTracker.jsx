@@ -5,12 +5,72 @@ import FlightMap from './flight/FlightMap';
 
 // Quick Search Airlines Data
 const QUICK_AIRLINES = [
-  { name: 'SAS', code: 'SK', icon: '🇸🇪', flights: ['SK4035', 'SK1429', 'SK1477', 'SK4000'] },
-  { name: 'Norwegian', code: 'DY', icon: '🇳🇴', flights: ['DY1302', 'DY620', 'DY1640', 'DY435'] },
-  { name: 'KLM', code: 'KL', icon: '🇳🇱', flights: ['KL1143', 'KL1001', 'KL1789', 'KL1991'] },
-  { name: 'Ryanair', code: 'FR', icon: '🇮🇪', flights: ['FR1392', 'FR1322', 'FR202', 'FR8394'] },
-  { name: 'Lufthansa', code: 'LH', icon: '🇩🇪', flights: ['LH400', 'LH861', 'LH2428', 'LH100'] },
-  { name: 'British Airways', code: 'BA', icon: '🇬🇧', flights: ['BA117', 'BA762', 'BA306', 'BA432'] }
+  {
+    name: 'SAS',
+    code: 'SK',
+    icon: '🇸🇪',
+    flights: [
+      'SK4035', 'SK4000', 'SK1429', 'SK1477', 'SK1415', 'SK1416', 'SK805', 'SK806',
+      'SK1471', 'SK1472', 'SK463', 'SK464', 'SK1868', 'SK1869', 'SK4601', 'SK4602',
+      'SK235', 'SK236', 'SK1463', 'SK1464', 'SK4783', 'SK4784', 'SK4001', 'SK4002',
+      'SK1437', 'SK1438', 'SK4037', 'SK4038', 'SK4411', 'SK4412', 'SK1401', 'SK1402'
+    ]
+  },
+  {
+    name: 'Norwegian',
+    code: 'DY',
+    icon: '🇳🇴',
+    flights: [
+      'DY1302', 'DY1303', 'DY620', 'DY621', 'DY1640', 'DY1641', 'DY435', 'DY436',
+      'DY1304', 'DY1305', 'DY1306', 'DY1307', 'DY1308', 'DY1309', 'DY614', 'DY615',
+      'DY1642', 'DY1643', 'DY1644', 'DY1645', 'DY437', 'DY438', 'DY622', 'DY623',
+      'DY1310', 'DY1311', 'DY1646', 'DY1647', 'DY624', 'DY625', 'DY439', 'DY440'
+    ]
+  },
+  {
+    name: 'KLM',
+    code: 'KL',
+    icon: '🇳🇱',
+    flights: [
+      'KL1143', 'KL1144', 'KL1001', 'KL1002', 'KL1789', 'KL1790', 'KL1991', 'KL1992',
+      'KL1145', 'KL1146', 'KL1147', 'KL1148', 'KL1003', 'KL1004', 'KL1791', 'KL1792',
+      'KL1149', 'KL1150', 'KL1993', 'KL1994', 'KL1005', 'KL1006', 'KL1793', 'KL1794',
+      'KL1151', 'KL1152', 'KL1995', 'KL1996', 'KL1007', 'KL1008', 'KL1795', 'KL1796'
+    ]
+  },
+  {
+    name: 'Ryanair',
+    code: 'FR',
+    icon: '🇮🇪',
+    flights: [
+      'FR1392', 'FR1393', 'FR1322', 'FR1323', 'FR202', 'FR203', 'FR8394', 'FR8395',
+      'FR1394', 'FR1395', 'FR1324', 'FR1325', 'FR204', 'FR205', 'FR8396', 'FR8397',
+      'FR1396', 'FR1397', 'FR1326', 'FR1327', 'FR206', 'FR207', 'FR8398', 'FR8399',
+      'FR1398', 'FR1399', 'FR1328', 'FR1329', 'FR208', 'FR209', 'FR8400', 'FR8401'
+    ]
+  },
+  {
+    name: 'Lufthansa',
+    code: 'LH',
+    icon: '🇩🇪',
+    flights: [
+      'LH400', 'LH401', 'LH861', 'LH862', 'LH2428', 'LH2429', 'LH100', 'LH101',
+      'LH863', 'LH864', 'LH2430', 'LH2431', 'LH402', 'LH403', 'LH102', 'LH103',
+      'LH865', 'LH866', 'LH2432', 'LH2433', 'LH404', 'LH405', 'LH104', 'LH105',
+      'LH867', 'LH868', 'LH2434', 'LH2435', 'LH406', 'LH407', 'LH106', 'LH107'
+    ]
+  },
+  {
+    name: 'British Airways',
+    code: 'BA',
+    icon: '🇬🇧',
+    flights: [
+      'BA117', 'BA118', 'BA762', 'BA763', 'BA306', 'BA307', 'BA432', 'BA433',
+      'BA764', 'BA765', 'BA308', 'BA309', 'BA434', 'BA435', 'BA119', 'BA120',
+      'BA766', 'BA767', 'BA310', 'BA311', 'BA436', 'BA437', 'BA121', 'BA122',
+      'BA768', 'BA769', 'BA312', 'BA313', 'BA438', 'BA439', 'BA123', 'BA124'
+    ]
+  }
 ];
 
 function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSavedFlightsUpdate }) {

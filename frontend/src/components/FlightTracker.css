@@ -132,10 +132,16 @@
 
 .quick-flights {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.5rem;
   padding: 0.5rem 1rem 1rem;
   background: rgba(var(--glass-bg-rgb), 0.3);
+}
+
+@media (max-width: 768px) {
+  .quick-flights {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .quick-flight-btn {
@@ -645,7 +651,7 @@
   }
 
   .quick-flights {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .quick-search-dropdown {
