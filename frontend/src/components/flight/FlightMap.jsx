@@ -157,7 +157,7 @@ function FlightsLayer({ onFlightsUpdate, onStatusUpdate, searchFlightNumber, fli
       if (timeSinceLastFetch < minInterval) {
         const waitTime = Math.ceil((minInterval - timeSinceLastFetch) / 1000);
         console.log(`[FR24] Rate limit: waiting ${waitTime}s`);
-        if (onStatusUpdate) onStatusUpdate(`Cooldown: ${waitTime}s`);
+        if (onStatusUpdate) onStatusUpdate(`Please wait ${waitTime}s...`);
         return;
       }
 
