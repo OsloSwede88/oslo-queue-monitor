@@ -115,33 +115,56 @@ function FlightsLayer({ onFlightsUpdate, onStatusUpdate, searchFlightNumber, fli
 
       const airportCoords = airportCode ? AIRPORT_COORDS[airportCode] : null;
 
+      // Try to get coordinates from AIRPORT_COORDS first, then fall back to flight data
+      let coords = null;
+      let airportName = null;
+
       if (airportCoords) {
+        coords = { lat: airportCoords.lat, lon: airportCoords.lon };
+        airportName = airportCoords.name;
+      } else if (airportCode) {
+        // Airport code exists but not in our lookup - try to use flight data coordinates
+        if (status === 'landed' && flightData.estArrivalLat && flightData.estArrivalLon) {
+          coords = { lat: flightData.estArrivalLat, lon: flightData.estArrivalLon };
+          airportName = flightData.estArrivalAirportName || airportCode;
+        } else if (flightData.estDepartureLat && flightData.estDepartureLon) {
+          coords = { lat: flightData.estDepartureLat, lon: flightData.estDepartureLon };
+          airportName = flightData.estDepartureAirportName || airportCode;
+        }
+      }
+
+      if (coords) {
         // Create a fallback flight marker at the airport
         const fallbackFlight = {
           fr24_id: 'fallback',
           flight: searchFlightNumber,
           callsign: searchFlightNumber,
-          lat: airportCoords.lat,
-          lon: airportCoords.lon,
+          lat: coords.lat,
+          lon: coords.lon,
           track: 0,
           alt: 0,
           gspeed: 0,
           type: flightData.aircraftModel || 'N/A',
           squawk: null,
-          origin_country: airportCoords.name,
+          origin_country: airportName,
           isLastKnown: true,
           locationName: locationName,
-          airportName: airportCoords.name
+          airportName: airportName
         };
 
-        map.flyTo([airportCoords.lat, airportCoords.lon], 10, {
+        map.flyTo([coords.lat, coords.lon], 10, {
           duration: 1.5
         });
 
         if (onStatusUpdate) {
-          onStatusUpdate(`Last known location: ${airportCoords.name}`);
+          onStatusUpdate(`Last known location: ${airportName}`);
         }
         onFlightsUpdate([fallbackFlight]);
+      } else if (airportCode) {
+        // We have airport code but no coordinates
+        const airportDisplayName = flightData.estDepartureAirportName || flightData.estArrivalAirportName || airportCode;
+        if (onStatusUpdate) onStatusUpdate(`At ${airportDisplayName} (${airportCode})`);
+        onFlightsUpdate([]);
       } else {
         if (onStatusUpdate) onStatusUpdate('Flight not currently airborne');
         onFlightsUpdate([]);
