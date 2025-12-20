@@ -335,14 +335,18 @@ function FlightMap({ onFlightSelect, searchFlightNumber, flightData }) {
             )}
           </>
         ) : (
-          <span className="flights-count" style={{ opacity: 0.6 }}>
-            {searchFlightNumber ? 'Searching...' : 'Search for a flight above to see it on the map'}
-          </span>
-        )}
-        {status && (
-          <span className="data-source" style={{ color: status.includes('Error') || status.includes('Rate limited') || status.includes('not found') ? '#ef4444' : '#fbbf24' }}>
-            {status}
-          </span>
+          <>
+            {!status && (
+              <span className="flights-count" style={{ opacity: 0.6 }}>
+                {searchFlightNumber ? 'Searching...' : 'Search for a flight above to see it on the map'}
+              </span>
+            )}
+            {status && (
+              <span className="data-source" style={{ color: status.includes('Error') || status.includes('Rate limited') || status.includes('not found') ? '#ef4444' : '#fbbf24' }}>
+                {status}
+              </span>
+            )}
+          </>
         )}
         {!status && flights.length > 0 && (
           <span className="data-source">
