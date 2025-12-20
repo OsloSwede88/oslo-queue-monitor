@@ -4,11 +4,12 @@ import FlightTimeline from './flight/FlightTimeline';
 import FlightMap from './flight/FlightMap';
 
 // Quick Search Airlines Data - Currently active flights
+// Using AirlineLogo API for reliable logos
 const QUICK_AIRLINES = [
   {
     name: 'SAS',
     code: 'SK',
-    icon: '🇸🇪',
+    logo: 'https://images.kiwi.com/airlines/64/SK.png',
     flights: [
       'SK10', 'SK1014', 'SK1285', 'SK1469', 'SK1584', 'SK159', 'SK1593', 'SK1621',
       'SK166', 'SK1774', 'SK1804', 'SK1819', 'SK1854', 'SK2050', 'SK2267', 'SK2503',
@@ -20,7 +21,7 @@ const QUICK_AIRLINES = [
   {
     name: 'Norwegian',
     code: 'DY',
-    icon: '🇳🇴',
+    logo: 'https://images.kiwi.com/airlines/64/DY.png',
     flights: [
       'DY1157', 'DY1328', 'DY1698', 'DY1714', 'DY1729', 'DY1759', 'DY1765', 'DY1770',
       'DY1788', 'DY1802', 'DY1816', 'DY1822', 'DY1824', 'DY1828', 'DY1836', 'DY1890',
@@ -30,7 +31,7 @@ const QUICK_AIRLINES = [
   {
     name: 'KLM',
     code: 'KL',
-    icon: '🇳🇱',
+    logo: 'https://images.kiwi.com/airlines/64/KL.png',
     flights: [
       'KL1007', 'KL1042', 'KL1056', 'KL1176', 'KL1218', 'KL1220', 'KL1232', 'KL1257',
       'KL1304', 'KL1333', 'KL1364', 'KL1466', 'KL1476', 'KL1502', 'KL1512', 'KL1572',
@@ -42,7 +43,7 @@ const QUICK_AIRLINES = [
   {
     name: 'Ryanair',
     code: 'FR',
-    icon: '🇮🇪',
+    logo: 'https://images.kiwi.com/airlines/64/FR.png',
     flights: [
       'FR1005', 'FR1026', 'FR1035', 'FR1086', 'FR1133', 'FR1134', 'FR1192', 'FR1252',
       'FR1261', 'FR1275', 'FR1318', 'FR1320', 'FR1337', 'FR1347', 'FR1413', 'FR1424',
@@ -54,7 +55,7 @@ const QUICK_AIRLINES = [
   {
     name: 'Lufthansa',
     code: 'LH',
-    icon: '🇩🇪',
+    logo: 'https://images.kiwi.com/airlines/64/LH.png',
     flights: [
       'LH1034', 'LH109', 'LH1095', 'LH1114', 'LH1127', 'LH1129', 'LH1141', 'LH1143',
       'LH1149', 'LH1150', 'LH1158', 'LH1167', 'LH1177', 'LH1178', 'LH1281', 'LH1282',
@@ -66,7 +67,7 @@ const QUICK_AIRLINES = [
   {
     name: 'British Airways',
     code: 'BA',
-    icon: '🇬🇧',
+    logo: 'https://images.kiwi.com/airlines/64/BA.png',
     flights: [
       'BA104', 'BA108', 'BA117', 'BA118', 'BA1308', 'BA139', 'BA1421', 'BA143',
       'BA1447', 'BA1448', 'BA1493', 'BA16', 'BA168', 'BA169', 'BA178', 'BA191',
@@ -78,7 +79,7 @@ const QUICK_AIRLINES = [
   {
     name: 'Air France',
     code: 'AF',
-    icon: '🇫🇷',
+    logo: 'https://images.kiwi.com/airlines/64/AF.png',
     flights: [
       'AF1025', 'AF1037', 'AF1046', 'AF1052', 'AF1070', 'AF1075', 'AF1105', 'AF1147',
       'AF1162', 'AF1178', 'AF1184', 'AF1234', 'AF1248', 'AF1263', 'AF1276', 'AF1330',
@@ -90,7 +91,7 @@ const QUICK_AIRLINES = [
   {
     name: 'Wizz Air',
     code: 'W6',
-    icon: '🇭🇺',
+    logo: 'https://images.kiwi.com/airlines/64/W6.png',
     flights: [
       'W61049', 'W61094', 'W61335', 'W61352', 'W61405', 'W61593', 'W61752', 'W61841',
       'W61973', 'W61989', 'W62033', 'W62045', 'W62283', 'W62301', 'W62448', 'W62486',
@@ -101,7 +102,7 @@ const QUICK_AIRLINES = [
   {
     name: 'easyJet',
     code: 'U2',
-    icon: '🇬🇧',
+    logo: 'https://images.kiwi.com/airlines/64/U2.png',
     flights: [
       'U21004', 'U21019', 'U21023', 'U21025', 'U21027', 'U21041', 'U21120', 'U21267',
       'U21311', 'U21364', 'U21394', 'U21409', 'U21453', 'U21469', 'U21541', 'U21552',
@@ -113,7 +114,7 @@ const QUICK_AIRLINES = [
   {
     name: 'Iberia',
     code: 'IB',
-    icon: '🇪🇸',
+    logo: 'https://images.kiwi.com/airlines/64/IB.png',
     flights: [
       'IB107', 'IB108', 'IB114', 'IB1142', 'IB125', 'IB1328', 'IB1452', 'IB154',
       'IB1545', 'IB1662', 'IB1802', 'IB211', 'IB2262', 'IB2290', 'IB2411', 'IB257',
@@ -1033,25 +1034,23 @@ Keep it concise but informative, around 150-200 words.`;
 
         <div className="flight-search glass glass-card" ref={quickSearchRef}>
           <div className="search-inputs">
-            <div className="flight-input-wrapper">
-              <input
-                type="text"
-                className="flight-input"
-                placeholder="Flight number (e.g., SK4035)"
-                value={flightNumber}
-                onChange={(e) => setFlightNumber(e.target.value)}
-                onKeyPress={handleKeyPress}
-              />
-              <button
-                className="quick-search-toggle"
-                onClick={toggleQuickSearch}
-                type="button"
-                title="Quick access to popular flights"
-              >
-                <span className="quick-search-icon">⚡</span>
-                <span className="quick-search-label">Quick Search</span>
-              </button>
-            </div>
+            <input
+              type="text"
+              className="flight-input"
+              placeholder="Flight number (e.g., SK4035)"
+              value={flightNumber}
+              onChange={(e) => setFlightNumber(e.target.value)}
+              onKeyPress={handleKeyPress}
+            />
+            <button
+              className="quick-search-toggle"
+              onClick={toggleQuickSearch}
+              type="button"
+              title="Quick access to popular flights"
+            >
+              <span className="quick-search-icon">⚡</span>
+              <span className="quick-search-label">Quick Search</span>
+            </button>
             <input
               type="date"
               className="flight-input"
@@ -1071,7 +1070,7 @@ Keep it concise but informative, around 150-200 words.`;
                     className={`quick-airline-btn ${selectedAirline === airline.code ? 'active' : ''}`}
                     onClick={() => selectAirline(airline.code)}
                   >
-                    <span>{airline.icon}</span>
+                    <img src={airline.logo} alt={airline.name} className="airline-logo" />
                     <span>{airline.name}</span>
                     <span className="expand-arrow">{selectedAirline === airline.code ? '▲' : '▼'}</span>
                   </button>
@@ -1127,9 +1126,24 @@ Keep it concise but informative, around 150-200 words.`;
           <div className="flight-card glass glass-card">
             <div className="flight-card-header">
               <div>
-                <h3>{flightData.callsign?.trim() || 'Unknown Flight'}</h3>
+                <h3>
+                  {flightData.callsign?.trim() || 'Unknown Flight'}
+                  <span className="flight-route-inline">
+                    {' • '}{flightData.estDepartureAirport || 'N/A'} → {flightData.estArrivalAirport || 'N/A'}
+                  </span>
+                </h3>
                 {flightData.airline && (
-                  <p className="airline-name">{flightData.airline} {flightData.airlineIata && `(${flightData.airlineIata})`}</p>
+                  <p className="airline-name">
+                    {flightData.airline} {flightData.airlineIata && `(${flightData.airlineIata})`}
+                    {flightData.scheduledDeparture && flightData.scheduledArrival && (() => {
+                      const depTime = new Date(flightData.scheduledDeparture);
+                      const arrTime = new Date(flightData.scheduledArrival);
+                      const duration = Math.round((arrTime - depTime) / (1000 * 60));
+                      const hours = Math.floor(duration / 60);
+                      const mins = duration % 60;
+                      return ` • ${hours}h ${mins}m`;
+                    })()}
+                  </p>
                 )}
               </div>
               <div className="flight-header-actions">
@@ -1186,6 +1200,16 @@ Keep it concise but informative, around 150-200 words.`;
                   <div className="detail-content">
                     <span className="detail-label">Scheduled Departure</span>
                     <span className="detail-value">{formatTime(flightData.scheduledDeparture)}</span>
+                    {flightData.actualDeparture && (
+                      <span className="detail-subtext">
+                        Actual: {formatTime(flightData.actualDeparture)}
+                      </span>
+                    )}
+                    {!flightData.actualDeparture && flightData.estimatedDeparture && (
+                      <span className="detail-subtext">
+                        Estimated: {formatTime(flightData.estimatedDeparture)}
+                      </span>
+                    )}
                     {flightData.departureDelay && (
                       <span className="detail-delay">Delayed {flightData.departureDelay} min</span>
                     )}
@@ -1196,6 +1220,16 @@ Keep it concise but informative, around 150-200 words.`;
                   <div className="detail-content">
                     <span className="detail-label">Scheduled Arrival</span>
                     <span className="detail-value">{formatTime(flightData.scheduledArrival)}</span>
+                    {flightData.actualArrival && (
+                      <span className="detail-subtext">
+                        Actual: {formatTime(flightData.actualArrival)}
+                      </span>
+                    )}
+                    {!flightData.actualArrival && flightData.estimatedArrival && (
+                      <span className="detail-subtext">
+                        Estimated: {formatTime(flightData.estimatedArrival)}
+                      </span>
+                    )}
                     {flightData.arrivalDelay && (
                       <span className="detail-delay">Delayed {flightData.arrivalDelay} min</span>
                     )}
@@ -1244,19 +1278,19 @@ Keep it concise but informative, around 150-200 words.`;
                   <div className="detail-content">
                     <span className="detail-label">Aircraft</span>
                     <span className="detail-value">
-                      {loadingAircraftInfo && !flightData.aircraftRegistration && !flightData.aircraftModel ? (
+                      {loadingAircraftInfo && !flightData.aircraftRegistration && !flightData.aircraftModel && !aircraftImage ? (
                         <span style={{ color: '#888' }}>
                           <span className="spinner-small" style={{ display: 'inline-block', width: '12px', height: '12px', marginRight: '8px' }}></span>
                           Loading aircraft details...
                         </span>
                       ) : (
                         <>
-                          {flightData.aircraftRegistration || ''}
-                          {flightData.aircraftRegistration && (flightData.aircraftIcao || flightData.aircraftModel) && ' • '}
-                          {flightData.aircraftIcao && `Type: ${flightData.aircraftIcao}`}
-                          {flightData.aircraftIcao && flightData.aircraftModel && ' • '}
-                          {flightData.aircraftModel && `Model: ${flightData.aircraftModel}`}
-                          {!loadingAircraftInfo && !flightData.aircraftRegistration && !flightData.aircraftIcao && !flightData.aircraftModel && 'Not available'}
+                          {(flightData.aircraftRegistration || aircraftImage?.registration) || ''}
+                          {(flightData.aircraftRegistration || aircraftImage?.registration) && (flightData.aircraftIcao || aircraftImage?.aircraftIcao || flightData.aircraftModel || aircraftImage?.aircraftType) && ' • '}
+                          {(flightData.aircraftIcao || aircraftImage?.aircraftIcao) && `Type: ${flightData.aircraftIcao || aircraftImage?.aircraftIcao}`}
+                          {(flightData.aircraftIcao || aircraftImage?.aircraftIcao) && (flightData.aircraftModel || aircraftImage?.aircraftType) && ' • '}
+                          {(flightData.aircraftModel || aircraftImage?.aircraftType) && `Model: ${flightData.aircraftModel || aircraftImage?.aircraftType}`}
+                          {!loadingAircraftInfo && !flightData.aircraftRegistration && !aircraftImage?.registration && !flightData.aircraftIcao && !aircraftImage?.aircraftIcao && !flightData.aircraftModel && !aircraftImage?.aircraftType && 'Not available'}
                         </>
                       )}
                     </span>
@@ -1274,30 +1308,6 @@ Keep it concise but informative, around 150-200 words.`;
               >
                 View on FlightRadar24 →
               </a>
-            </div>
-          </div>
-
-          <div className="flight-info-cards">
-            <div className="info-mini-card">
-              <div className="mini-card-icon">📍</div>
-              <div className="mini-card-content">
-                <div className="mini-card-label">Route</div>
-                <div className="mini-card-value">
-                  {flightData.estDepartureAirport || '???'} → {flightData.estArrivalAirport || '???'}
-                </div>
-              </div>
-            </div>
-
-            <div className="info-mini-card">
-              <div className="mini-card-icon">⏱️</div>
-              <div className="mini-card-content">
-                <div className="mini-card-label">Duration</div>
-                <div className="mini-card-value">
-                  {flightData.firstSeen && flightData.lastSeen
-                    ? `${Math.round((flightData.lastSeen - flightData.firstSeen) / 60)} min`
-                    : 'N/A'}
-                </div>
-              </div>
             </div>
           </div>
 

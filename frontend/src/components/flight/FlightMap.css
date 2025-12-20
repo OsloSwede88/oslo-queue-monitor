@@ -13,6 +13,18 @@
   z-index: 1;
 }
 
+/* Override Leaflet default marker images at the source */
+.leaflet-default-icon-path {
+  background-image: none !important;
+}
+
+.leaflet-marker-icon:not(.aircraft-icon) {
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
 /* Empty state overlay */
 .flight-map-empty-state {
   position: absolute;
@@ -45,10 +57,54 @@
   color: var(--text-primary, #e2e8f0);
 }
 
-/* Aircraft marker styling */
-.aircraft-icon {
+/* Aircraft marker styling - COMPLETE OVERRIDE */
+.aircraft-icon,
+.aircraft-icon.leaflet-div-icon,
+.leaflet-marker-icon.aircraft-icon {
   background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
   border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Hide ALL default Leaflet marker elements */
+.aircraft-icon img,
+.aircraft-icon::before,
+.aircraft-icon::after,
+.leaflet-marker-pane .leaflet-marker-icon:not(.aircraft-marker):not([class*="aircraft"]) {
+  display: none !important;
+  content: none !important;
+  visibility: hidden !important;
+}
+
+/* Remove default marker shadow completely */
+.leaflet-marker-shadow,
+.leaflet-shadow-pane,
+.leaflet-marker-pane .leaflet-marker-shadow {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Ensure only our custom aircraft marker shows */
+.leaflet-marker-icon {
+  background-image: none !important;
+  background: none !important;
+}
+
+/* Nuclear option - hide ALL marker pane icons except our custom aircraft */
+.leaflet-marker-pane > * {
+  background-image: none !important;
+}
+
+.leaflet-marker-pane img {
+  display: none !important;
+}
+
+/* Only show our aircraft icon */
+.leaflet-marker-pane .aircraft-icon {
+  display: block !important;
 }
 
 .aircraft-marker {

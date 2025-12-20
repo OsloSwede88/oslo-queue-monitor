@@ -15,7 +15,13 @@ function Header({ onMenuClick, theme, onThemeToggle }) {
           <span className="hamburger-line"></span>
         </button>
 
-        <h1 className="header-title">✈️ Flight Tracker</h1>
+        <button
+          className="header-title-btn"
+          onClick={() => window.location.reload()}
+          aria-label="Refresh page"
+        >
+          <h1 className="header-title">✈️ Flight Tracker</h1>
+        </button>
 
         <button
           className={`theme-toggle ${theme}`}

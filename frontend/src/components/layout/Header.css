@@ -67,15 +67,34 @@
   animation: hamburger-to-x-bottom 0.3s ease forwards;
 }
 
+/* Header Title Button */
+.header-title-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex: 1;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.header-title-btn:hover {
+  opacity: 0.8;
+  transform: scale(1.02);
+}
+
+.header-title-btn:active {
+  transform: scale(0.98);
+}
+
 /* Header Title */
 .header-title {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
-  flex: 1;
   text-align: center;
   letter-spacing: -0.02em;
+  pointer-events: none;
 }
 
 /* Theme Toggle */
@@ -153,7 +172,8 @@
 
 /* Focus States for Accessibility */
 .hamburger-btn:focus-visible,
-.theme-toggle:focus-visible {
+.theme-toggle:focus-visible,
+.header-title-btn:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
