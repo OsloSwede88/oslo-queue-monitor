@@ -106,9 +106,13 @@ function FlightTracker() {
     };
 
     try {
-      // Try Planespotters.net API via Vercel serverless function (using hex code)
+      // Call Planespotters API directly (supports CORS)
       if (icao24) {
-        const response = await fetch(`/api/aircraft-photo?identifier=${icao24}&type=hex`);
+        const response = await fetch(`https://api.planespotters.net/pub/photos/hex/${icao24}`, {
+          headers: {
+            'User-Agent': 'Flight-Tracker-App/1.0'
+          }
+        });
         if (response.ok) {
           const data = await response.json();
           console.log('[fetchAircraftImage] Planespotters data:', data);
@@ -130,7 +134,11 @@ function FlightTracker() {
 
       // Fallback to registration search
       if (registration) {
-        const response = await fetch(`/api/aircraft-photo?identifier=${registration}&type=reg`);
+        const response = await fetch(`https://api.planespotters.net/pub/photos/reg/${registration}`, {
+          headers: {
+            'User-Agent': 'Flight-Tracker-App/1.0'
+          }
+        });
         if (response.ok) {
           const data = await response.json();
           console.log('[fetchAircraftImage] Planespotters data:', data);
@@ -562,19 +570,199 @@ Keep it concise but informative, around 150-200 words.`;
 
   // Note: Flight subscription feature removed (backend deprecated)
 
+  // ICAO to IATA airline code mapping (comprehensive)
+  const icaoToIataMapping = {
+    // === SCANDINAVIA & NORDICS ===
+    'NOZ': 'DY',   // Norwegian Air Shuttle
+    'NAX': 'DY',   // Norwegian Air International
+    'SAS': 'SK',   // SAS Scandinavian Airlines
+    'WIF': 'WF',   // Widerøe
+    'FIN': 'AY',   // Finnair
+    'DTR': 'RC',   // DAT Danish Air Transport (using DTR to avoid conflict)
+    'ICE': 'FI',   // Icelandair
+    'BCS': 'OV',   // Bluebird Nordic (BRA Braathens Regional)
+    'TFL': 'PY',   // Transavia France
+
+    // === WESTERN EUROPE ===
+    'DLH': 'LH',   // Lufthansa
+    'BAW': 'BA',   // British Airways
+    'AFR': 'AF',   // Air France
+    'KLM': 'KL',   // KLM Royal Dutch Airlines
+    'RYR': 'FR',   // Ryanair
+    'EZY': 'U2',   // easyJet
+    'IBE': 'IB',   // Iberia
+    'TAP': 'TP',   // TAP Air Portugal
+    'SWR': 'LX',   // Swiss International Air Lines
+    'AUA': 'OS',   // Austrian Airlines
+    'BEL': 'SN',   // Brussels Airlines
+    'EWG': 'EW',   // Eurowings
+    'GWI': 'ST',   // Germania
+    'TUI': 'X3',   // TUI Airways
+    'EIN': 'EI',   // Aer Lingus
+    'RUK': 'RK',   // Ryanair UK
+    'VLG': 'VY',   // Vueling Airlines
+    'AEE': 'A3',   // Aegean Airlines
+    'THY': 'TK',   // Turkish Airlines
+
+    // === EASTERN EUROPE ===
+    'LOT': 'LO',   // LOT Polish Airlines
+    'CSA': 'OK',   // Czech Airlines
+    'WZZ': 'W6',   // Wizz Air
+    'TRA': 'HV',   // Transavia
+    'ROT': 'RO',   // TAROM
+    'BUL': 'FB',   // Bulgaria Air
+    'UKR': 'PS',   // Ukraine International Airlines
+    'BMS': 'ZB',   // Air Albania
+    'AWC': '8A',   // Atlas Global
+
+    // === UK & IRELAND ===
+    'VIR': 'VS',   // Virgin Atlantic
+    'LOG': 'LS',   // Loganair
+    'EXS': 'LS',   // Jet2.com
+    'TOM': 'BY',   // TUI Airways
+    'BMR': 'BM',   // flybmi
+
+    // === NORTH AMERICA ===
+    'AAL': 'AA',   // American Airlines
+    'DAL': 'DL',   // Delta Air Lines
+    'UAL': 'UA',   // United Airlines
+    'SWA': 'WN',   // Southwest Airlines
+    'JBU': 'B6',   // JetBlue Airways
+    'ASA': 'AS',   // Alaska Airlines
+    'FFT': 'F9',   // Frontier Airlines
+    'NKS': 'NK',   // Spirit Airlines
+    'ACA': 'AC',   // Air Canada
+    'WJA': 'WS',   // WestJet
+    'SKW': 'OO',   // SkyWest Airlines
+    'ENY': 'MQ',   // Envoy Air
+    'RPA': 'YX',   // Republic Airways
+    'GOJ': 'G4',   // Allegiant Air
+    'SCX': 'SY',   // Sun Country Airlines
+
+    // === MIDDLE EAST ===
+    'UAE': 'EK',   // Emirates
+    'QTR': 'QR',   // Qatar Airways
+    'ETD': 'EY',   // Etihad Airways
+    'FDB': 'FZ',   // flydubai
+    'GFA': 'GF',   // Gulf Air
+    'KAC': 'KU',   // Kuwait Airways
+    'RJA': 'RJ',   // Royal Jordanian
+    'MEA': 'ME',   // Middle East Airlines
+    'MSR': 'MS',   // EgyptAir
+    'SVA': 'SV',   // Saudi Arabian Airlines
+    'WIA': 'IY',   // Yemenia
+    'OMA': 'WY',   // Oman Air
+
+    // === ASIA-PACIFIC ===
+    'SIA': 'SQ',   // Singapore Airlines
+    'CPA': 'CX',   // Cathay Pacific
+    'THA': 'TG',   // Thai Airways
+    'MAS': 'MH',   // Malaysia Airlines
+    'AXM': 'D7',   // AirAsia X
+    'VJC': 'VJ',   // VietJet Air
+    'HVN': 'VN',   // Vietnam Airlines
+    'CEB': '5J',   // Cebu Pacific
+    'PAL': 'PR',   // Philippine Airlines
+    'GIA': 'GA',   // Garuda Indonesia
+    'JAL': 'JL',   // Japan Airlines
+    'ANA': 'NH',   // All Nippon Airways
+    'KAL': 'KE',   // Korean Air
+    'AAR': 'OZ',   // Asiana Airlines
+    'CSN': 'CZ',   // China Southern Airlines
+    'CES': 'MU',   // China Eastern Airlines
+    'CCA': 'CA',   // Air China
+    'CHH': 'HU',   // Hainan Airlines
+    'CSC': '3U',   // Sichuan Airlines
+    'AIJ': 'AI',   // Air India
+    'IGO': '6E',   // IndiGo
+    'VTI': 'IT',   // Tigerair Taiwan
+
+    // === AUSTRALIA & OCEANIA ===
+    'QFA': 'QF',   // Qantas
+    'VOZ': 'VA',   // Virgin Australia
+    'JST': 'JQ',   // Jetstar Airways
+    'ANZ': 'NZ',   // Air New Zealand
+    'FJI': 'FJ',   // Fiji Airways
+
+    // === AFRICA ===
+    'SAA': 'SA',   // South African Airways
+    'ETH': 'ET',   // Ethiopian Airlines
+    'KQA': 'KQ',   // Kenya Airways
+    'RAM': 'AT',   // Royal Air Maroc
+    'AEW': 'RW',   // RwandAir
+    'DAH': 'AH',   // Air Algérie
+    'TUN': 'TU',   // Tunisair
+    'LBT': 'TN',   // Nouvelair
+
+    // === SOUTH AMERICA ===
+    'GLO': 'G3',   // GOL Linhas Aéreas
+    'TAM': 'JJ',   // LATAM Brasil
+    'AZU': 'AD',   // Azul Brazilian Airlines
+    'LAN': 'LA',   // LATAM Airlines
+    'ARG': 'AR',   // Aerolíneas Argentinas
+    'AVA': 'AV',   // Avianca
+    'CMP': 'CM',   // Copa Airlines
+
+    // === CARGO AIRLINES ===
+    'FDX': 'FX',   // FedEx Express
+    'UPS': '5X',   // UPS Airlines
+    'GEC': 'ER',   // DHL Aviation
+    'DHK': 'D0',   // DHL Air
+    'CLX': 'CL',   // Cargolux
+
+    // === REGIONAL & OTHER ===
+    'BEE': 'BE',   // Flybe
+    'WOW': 'WW',   // WOW air
+    'MPH': 'MP',   // Martinair
+    'GTI': 'HO',   // Juneyao Airlines
+    'CUA': 'CU',   // Cubana
+    'CND': 'CO',   // Corendon Airlines
+    'AMC': 'AN',   // Air Niugini
+    'MPD': 'OM',   // MIAT Mongolian Airlines
+  };
+
   // Handler for when a flight is selected from the map
   const handleFlightSelectFromMap = (fr24Flight) => {
     console.log('[handleFlightSelectFromMap] Selected flight from map:', fr24Flight);
 
-    // Extract flight number from FR24 data
-    const flightNum = fr24Flight.flight || fr24Flight.callsign;
-    if (flightNum) {
-      setFlightNumber(flightNum.trim());
-      // Trigger search with the selected flight
-      setTimeout(() => {
-        searchFlight();
-      }, 100);
+    // Extract callsign from OpenSky data
+    const callsign = (fr24Flight.flight || fr24Flight.callsign || '').trim();
+
+    if (!callsign) {
+      console.log('[handleFlightSelectFromMap] No callsign found');
+      return;
     }
+
+    // Try to parse airline code and flight number
+    // Format: AIRLINE123 or AIRLINE1234 (e.g., NOZ645, SAS4434)
+    const match = callsign.match(/^([A-Z]{2,3})(\d+)$/);
+
+    if (match) {
+      const [, airlineCode, flightNum] = match;
+
+      // Try to convert ICAO to IATA
+      const iataCode = icaoToIataMapping[airlineCode];
+
+      if (iataCode) {
+        // Use IATA code format (what most flight APIs expect)
+        const formattedFlight = `${iataCode}${flightNum}`;
+        console.log(`[handleFlightSelectFromMap] Converted ${callsign} → ${formattedFlight}`);
+        setFlightNumber(formattedFlight);
+      } else {
+        // Unknown airline, try as-is
+        console.log(`[handleFlightSelectFromMap] Unknown airline code ${airlineCode}, trying as-is: ${callsign}`);
+        setFlightNumber(callsign);
+      }
+    } else {
+      // Couldn't parse, use as-is
+      console.log(`[handleFlightSelectFromMap] Could not parse callsign format, trying as-is: ${callsign}`);
+      setFlightNumber(callsign);
+    }
+
+    // Trigger search with the selected flight
+    setTimeout(() => {
+      searchFlight();
+    }, 100);
   };
 
   return (
@@ -586,7 +774,10 @@ Keep it concise but informative, around 150-200 words.`;
         </div>
 
         {/* Live Flight Map */}
-        <FlightMap onFlightSelect={handleFlightSelectFromMap} />
+        <FlightMap
+          onFlightSelect={handleFlightSelectFromMap}
+          searchFlightNumber={flightData?.flight_iata || flightData?.flight_icao || (flightData ? flightNumber : null)}
+        />
 
         <div className="flight-search glass glass-card">
         <div className="search-inputs">

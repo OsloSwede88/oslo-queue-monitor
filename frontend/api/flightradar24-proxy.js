@@ -28,14 +28,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { bounds } = req.query;
+    const { bounds, flights } = req.query;
 
-    if (!bounds) {
-      return res.status(400).json({ error: 'Missing required query parameter: bounds' });
+    if (!bounds && !flights) {
+      return res.status(400).json({ error: 'Missing required query parameter: bounds or flights' });
     }
 
-    // FlightRadar24 API endpoint
-    const fr24Url = `https://fr24api.flightradar24.com/api/live/flight-positions/full?bounds=${bounds}`;
+    // FlightRadar24 API endpoint - support both bounds and specific flight search
+    const queryParam = flights ? `flights=${flights}` : `bounds=${bounds}`;
+    const fr24Url = `https://fr24api.flightradar24.com/api/live/flight-positions/full?${queryParam}`;
 
     console.log('[FR24 Proxy] Fetching flights:', fr24Url);
 

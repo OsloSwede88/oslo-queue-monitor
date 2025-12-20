@@ -7,85 +7,38 @@ import './FlightMap.css';
 // FlightRadar24 API - Use serverless proxy to keep token secure
 const FR24_PROXY = '/api/flightradar24-proxy';
 
-// Component to handle map bounds changes and fetch flights
-function FlightsLayer({ onFlightsUpdate, onStatusUpdate, refreshTrigger }) {
+// Component to fetch and display a specific flight on the map
+function FlightsLayer({ onFlightsUpdate, onStatusUpdate, searchFlightNumber }) {
   const map = useMap();
-  const [bounds, setBounds] = useState(null);
   const lastFetchRef = useRef(0);
 
-  // Debug: Component mounted
+  // Fetch flight when searchFlightNumber changes
   useEffect(() => {
-    console.log('[FlightsLayer] Component mounted');
-  }, []);
+    if (!searchFlightNumber) {
+      // Clear flights when no search
+      onFlightsUpdate([]);
+      return;
+    }
 
-  useEffect(() => {
-    let debounceTimer;
-    let initialBoundsSet = false;
-
-    const updateBounds = () => {
-      // Debounce: wait 2 seconds after user stops moving map
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        const mapBounds = map.getBounds();
-        const north = mapBounds.getNorth();
-        const south = mapBounds.getSouth();
-        const west = mapBounds.getWest();
-        const east = mapBounds.getEast();
-
-        console.log('[FlightsLayer] Bounds updated (debounced)');
-        setBounds({ north, south, west, east });
-      }, 2000);
-    };
-
-    // Initial bounds (with small delay to avoid double-fetch)
-    setTimeout(() => {
-      if (!initialBoundsSet) {
-        const mapBounds = map.getBounds();
-        console.log('[FlightsLayer] Setting initial bounds');
-        setBounds({
-          north: mapBounds.getNorth(),
-          south: mapBounds.getSouth(),
-          west: mapBounds.getWest(),
-          east: mapBounds.getEast()
-        });
-        initialBoundsSet = true;
-      }
-    }, 500);
-
-    // Update on map move/zoom (with debounce)
-    map.on('moveend', updateBounds);
-    map.on('zoomend', updateBounds);
-
-    return () => {
-      clearTimeout(debounceTimer);
-      map.off('moveend', updateBounds);
-      map.off('zoomend', updateBounds);
-    };
-  }, [map]);
-
-  useEffect(() => {
-    if (!bounds) return;
-
-    const fetchFlights = async () => {
-      // Rate limiting: minimum 10 seconds between requests (with OAuth we have 4000 credits/day)
+    const fetchFlight = async () => {
+      // Rate limiting: minimum 5 seconds between requests
       const now = Date.now();
       const timeSinceLastFetch = now - lastFetchRef.current;
-      const minInterval = 10000; // 10 seconds
+      const minInterval = 5000; // 5 seconds
 
       if (timeSinceLastFetch < minInterval) {
         const waitTime = Math.ceil((minInterval - timeSinceLastFetch) / 1000);
-        console.log(`[OpenSky] Rate limit: waiting ${waitTime}s`);
+        console.log(`[FR24] Rate limit: waiting ${waitTime}s`);
         if (onStatusUpdate) onStatusUpdate(`Cooldown: ${waitTime}s`);
         return;
       }
 
       try {
-        // FlightRadar24 bounds format: north,south,west,east
-        const boundsStr = `${bounds.north},${bounds.south},${bounds.west},${bounds.east}`;
-        const url = `${FR24_PROXY}?bounds=${boundsStr}`;
+        // Search for specific flight
+        const url = `${FR24_PROXY}?flights=${searchFlightNumber}`;
 
-        console.log('[FR24] Fetching flights via proxy:', url);
-        if (onStatusUpdate) onStatusUpdate('Loading...');
+        console.log('[FR24] Searching for flight:', searchFlightNumber);
+        if (onStatusUpdate) onStatusUpdate('Searching...');
         lastFetchRef.current = now;
 
         const response = await fetch(url);
@@ -102,8 +55,19 @@ function FlightsLayer({ onFlightsUpdate, onStatusUpdate, refreshTrigger }) {
         if (response.ok) {
           const data = await response.json();
           const flights = data.data || [];
-          console.log(`[FR24] ✅ Received ${flights.length} flights`);
-          if (onStatusUpdate) onStatusUpdate(null);
+          console.log(`[FR24] ✅ Found ${flights.length} flight(s)`);
+
+          if (flights.length > 0) {
+            // Center map on flight location
+            const flight = flights[0];
+            map.flyTo([flight.lat, flight.lon], 8, {
+              duration: 1.5
+            });
+            if (onStatusUpdate) onStatusUpdate(null);
+          } else {
+            if (onStatusUpdate) onStatusUpdate('Flight not found');
+          }
+
           onFlightsUpdate(flights);
         } else {
           const errorText = await response.text();
@@ -112,76 +76,14 @@ function FlightsLayer({ onFlightsUpdate, onStatusUpdate, refreshTrigger }) {
           onFlightsUpdate([]);
         }
       } catch (error) {
-        console.error('[FR24] ❌ Error fetching flights:', error);
+        console.error('[FR24] ❌ Error fetching flight:', error);
         if (onStatusUpdate) onStatusUpdate('Connection error');
         onFlightsUpdate([]);
       }
     };
 
-    // Fetch immediately (with rate limit check)
-    fetchFlights();
-
-    // Auto-refresh every 60 seconds (very conservative to preserve daily API credits)
-    const interval = setInterval(fetchFlights, 60000);
-
-    return () => clearInterval(interval);
-  }, [bounds, onFlightsUpdate, onStatusUpdate]);
-
-  // Manual refresh trigger
-  useEffect(() => {
-    if (!refreshTrigger || !bounds) return;
-
-    const fetchFlights = async () => {
-      const now = Date.now();
-      const timeSinceLastFetch = now - lastFetchRef.current;
-      const minInterval = 10000;
-
-      if (timeSinceLastFetch < minInterval) {
-        const waitTime = Math.ceil((minInterval - timeSinceLastFetch) / 1000);
-        console.log(`[OpenSky] Manual refresh blocked: wait ${waitTime}s`);
-        if (onStatusUpdate) onStatusUpdate(`Wait ${waitTime}s before refresh`);
-        return;
-      }
-
-      try {
-        const boundsStr = `${bounds.north},${bounds.south},${bounds.west},${bounds.east}`;
-        const url = `${FR24_PROXY}?bounds=${boundsStr}`;
-        console.log('[FR24] Manual refresh via proxy:', url);
-        if (onStatusUpdate) onStatusUpdate('Loading...');
-        lastFetchRef.current = now;
-
-        const response = await fetch(url);
-
-        console.log('[FR24] Manual refresh response:', response.status);
-
-        if (response.status === 429) {
-          console.warn('[FR24] ❌ Rate limited (429)');
-          if (onStatusUpdate) onStatusUpdate('Rate limited - try later');
-          onFlightsUpdate([]);
-          return;
-        }
-
-        if (response.ok) {
-          const data = await response.json();
-          const flights = data.data || [];
-          console.log(`[FR24] ✅ Manual refresh: ${flights.length} flights`);
-          if (onStatusUpdate) onStatusUpdate(null);
-          onFlightsUpdate(flights);
-        } else {
-          const errorText = await response.text();
-          console.error('[FR24] ❌ API error:', response.status, errorText);
-          if (onStatusUpdate) onStatusUpdate(`Error: ${response.status}`);
-          onFlightsUpdate([]);
-        }
-      } catch (error) {
-        console.error('[FR24] ❌ Error:', error);
-        if (onStatusUpdate) onStatusUpdate('Connection error');
-        onFlightsUpdate([]);
-      }
-    };
-
-    fetchFlights();
-  }, [refreshTrigger, bounds, onFlightsUpdate, onStatusUpdate]);
+    fetchFlight();
+  }, [searchFlightNumber, map, onFlightsUpdate, onStatusUpdate]);
 
   return null;
 }
@@ -205,27 +107,16 @@ function createAircraftIcon(heading, altitude) {
   });
 }
 
-function FlightMap({ onFlightSelect }) {
+function FlightMap({ onFlightSelect, searchFlightNumber }) {
   const [flights, setFlights] = useState([]);
   const [selectedFlight, setSelectedFlight] = useState(null);
   const [status, setStatus] = useState(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  // Debug: Component mounted
-  useEffect(() => {
-    console.log('[FlightMap] Component mounted');
-  }, []);
 
   const handleFlightClick = (flight) => {
     setSelectedFlight(flight);
     if (onFlightSelect) {
       onFlightSelect(flight);
     }
-  };
-
-  const handleManualRefresh = () => {
-    console.log('[FlightMap] Manual refresh triggered');
-    setRefreshTrigger(prev => prev + 1);
   };
 
   const formatSpeed = (speed) => {
@@ -238,6 +129,19 @@ function FlightMap({ onFlightSelect }) {
 
   return (
     <div className="flight-map-container">
+      {flights.length === 0 && !status && (
+        <div className="flight-map-empty-state">
+          <div className="empty-state-content">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.5, marginBottom: '1rem' }}>
+              <path d="M21,16V14L13,9V3.5A1.5,1.5 0 0,0 11.5,2A1.5,1.5 0 0,0 10,3.5V9L2,14V16L10,13.5V19L8,20.5V22L11.5,21L15,22V20.5L13,19V13.5L21,16Z" />
+            </svg>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '0.5rem' }}>Track a Flight</h3>
+            <p style={{ fontSize: '0.875rem', opacity: 0.7, maxWidth: '300px', textAlign: 'center' }}>
+              Search for a flight number above to see its live position on the map
+            </p>
+          </div>
+        </div>
+      )}
       <MapContainer
         center={[63.0, 10.0]} // Center on Norway
         zoom={5}
@@ -252,7 +156,7 @@ function FlightMap({ onFlightSelect }) {
         <FlightsLayer
           onFlightsUpdate={setFlights}
           onStatusUpdate={setStatus}
-          refreshTrigger={refreshTrigger}
+          searchFlightNumber={searchFlightNumber}
         />
 
         {flights.map((flight) => (
@@ -320,29 +224,30 @@ function FlightMap({ onFlightSelect }) {
       </MapContainer>
 
       <div className="flight-map-stats">
-        <span className="flights-count">
-          {flights.length} aircraft visible
-        </span>
-        {selectedFlight && (
-          <span className="selected-flight">
-            Selected: {selectedFlight.flight || selectedFlight.callsign}
+        {flights.length > 0 ? (
+          <>
+            <span className="flights-count">
+              ✈️ {flights[0].flight || flights[0].callsign} - {flights[0].type || 'Unknown'}
+            </span>
+            {selectedFlight && (
+              <span className="selected-flight">
+                {formatAltitude(selectedFlight.alt)} • {formatSpeed(selectedFlight.gspeed)}
+              </span>
+            )}
+          </>
+        ) : (
+          <span className="flights-count" style={{ opacity: 0.6 }}>
+            {searchFlightNumber ? 'Searching...' : 'Search for a flight above to see it on the map'}
           </span>
         )}
-        <button
-          onClick={handleManualRefresh}
-          className="map-refresh-btn"
-          title="Refresh flight data (20s cooldown)"
-        >
-          ↻ Refresh
-        </button>
         {status && (
-          <span className="data-source" style={{ color: status.includes('Error') || status.includes('Rate limited') ? '#ef4444' : '#fbbf24' }}>
+          <span className="data-source" style={{ color: status.includes('Error') || status.includes('Rate limited') || status.includes('not found') ? '#ef4444' : '#fbbf24' }}>
             {status}
           </span>
         )}
-        {!status && (
+        {!status && flights.length > 0 && (
           <span className="data-source">
-            Data: FlightRadar24
+            Live via FlightRadar24
           </span>
         )}
       </div>
