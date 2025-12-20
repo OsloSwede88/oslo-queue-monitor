@@ -145,12 +145,14 @@ function FlightsLayer({ onFlightsUpdate, onStatusUpdate, searchFlightNumber, fli
         } else {
           const errorText = await response.text();
           console.error('[FR24] ❌ API error:', response.status, errorText);
-          if (onStatusUpdate) onStatusUpdate(`Error: ${response.status}`);
+          // Don't show technical API errors to users - they can't fix them
+          if (onStatusUpdate) onStatusUpdate(null);
           onFlightsUpdate([]);
         }
       } catch (error) {
         console.error('[FR24] ❌ Error fetching flight:', error);
-        if (onStatusUpdate) onStatusUpdate('Connection error');
+        // Don't show connection errors - just fail silently
+        if (onStatusUpdate) onStatusUpdate(null);
         onFlightsUpdate([]);
       }
     };
@@ -322,38 +324,40 @@ function FlightMap({ onFlightSelect, searchFlightNumber, flightData }) {
         ))}
       </MapContainer>
 
-      <div className="flight-map-stats">
-        {flights.length > 0 ? (
-          <>
-            <span className="flights-count">
-              ✈️ {flights[0].flight || flights[0].callsign} - {flights[0].type || 'Unknown'}
+      {(flights.length > 0 || !searchFlightNumber || status) && (
+        <div className="flight-map-stats">
+          {flights.length > 0 ? (
+            <>
+              <span className="flights-count">
+                ✈️ {flights[0].flight || flights[0].callsign} - {flights[0].type || 'Unknown'}
+              </span>
+              {selectedFlight && (
+                <span className="selected-flight">
+                  {formatAltitude(selectedFlight.alt)} • {formatSpeed(selectedFlight.gspeed)}
+                </span>
+              )}
+            </>
+          ) : (
+            <>
+              {!status && !searchFlightNumber && (
+                <span className="flights-count" style={{ opacity: 0.6 }}>
+                  Search for a flight above to see it on the map
+                </span>
+              )}
+              {status && (
+                <span className="data-source" style={{ color: status.includes('Error') || status.includes('Rate limited') || status.includes('not found') ? '#ef4444' : '#fbbf24' }}>
+                  {status}
+                </span>
+              )}
+            </>
+          )}
+          {!status && flights.length > 0 && (
+            <span className="data-source">
+              Live via FlightRadar24
             </span>
-            {selectedFlight && (
-              <span className="selected-flight">
-                {formatAltitude(selectedFlight.alt)} • {formatSpeed(selectedFlight.gspeed)}
-              </span>
-            )}
-          </>
-        ) : (
-          <>
-            {!status && (
-              <span className="flights-count" style={{ opacity: 0.6 }}>
-                {searchFlightNumber ? 'Searching...' : 'Search for a flight above to see it on the map'}
-              </span>
-            )}
-            {status && (
-              <span className="data-source" style={{ color: status.includes('Error') || status.includes('Rate limited') || status.includes('not found') ? '#ef4444' : '#fbbf24' }}>
-                {status}
-              </span>
-            )}
-          </>
-        )}
-        {!status && flights.length > 0 && (
-          <span className="data-source">
-            Live via FlightRadar24
-          </span>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
