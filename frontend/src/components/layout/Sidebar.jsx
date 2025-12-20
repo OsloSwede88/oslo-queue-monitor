@@ -1,12 +1,38 @@
 import './Sidebar.css';
 
-function Sidebar({ isOpen, onClose, currentView, onNavigate, theme, onThemeToggle }) {
+function Sidebar({ isOpen, onClose, currentView, onNavigate, theme, onThemeToggle, searchHistory = [], onSearchFromHistory, onClearHistory }) {
   const handleNavigation = (view) => {
     onNavigate(view);
     // Auto-close on mobile
     if (window.innerWidth < 768) {
       onClose();
     }
+  };
+
+  const handleHistoryClick = (historyItem) => {
+    onSearchFromHistory(historyItem);
+  };
+
+  const handleClearHistory = () => {
+    if (window.confirm('Clear all search history?')) {
+      onClearHistory();
+    }
+  };
+
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
   };
 
   if (!isOpen) return null;
@@ -42,6 +68,42 @@ function Sidebar({ isOpen, onClose, currentView, onNavigate, theme, onThemeToggl
           </button>
 
           <div className="nav-divider"></div>
+
+          {/* Search History Section */}
+          {searchHistory && searchHistory.length > 0 && (
+            <>
+              <div className="sidebar-section-header">
+                <span className="section-title">Recent Searches</span>
+                <button
+                  className="clear-history-btn"
+                  onClick={handleClearHistory}
+                  aria-label="Clear history"
+                  title="Clear all search history"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="history-list">
+                {searchHistory.map((item, index) => (
+                  <button
+                    key={`${item.flightNumber}-${item.timestamp}`}
+                    className="history-item"
+                    onClick={() => handleHistoryClick(item)}
+                  >
+                    <div className="history-item-header">
+                      <span className="history-flight-number">{item.flightNumber}</span>
+                      <span className="history-timestamp">{formatTimestamp(item.timestamp)}</span>
+                    </div>
+                    {item.airline && (
+                      <div className="history-airline">{item.airline}</div>
+                    )}
+                    <div className="history-route">{item.route}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="nav-divider"></div>
+            </>
+          )}
 
           {/* Theme Toggle in Sidebar */}
           <div className="nav-item-inline">

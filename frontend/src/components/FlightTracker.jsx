@@ -3,7 +3,7 @@ import './FlightTracker.css';
 import FlightTimeline from './flight/FlightTimeline';
 import FlightMap from './flight/FlightMap';
 
-function FlightTracker() {
+function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger }) {
   const [flightNumber, setFlightNumber] = useState('');
   const [flightDate, setFlightDate] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,6 +16,39 @@ function FlightTracker() {
   const [loadingAircraftImage, setLoadingAircraftImage] = useState(false);
 
   // Note: Real-time flight monitoring removed (backend deprecated)
+
+  // Track if we should auto-search from history
+  const shouldAutoSearch = useRef(false);
+
+  // Save search to history
+  const saveToSearchHistory = (flightInfo) => {
+    const historyItem = {
+      flightNumber: flightInfo.callsign,
+      airline: flightInfo.airline,
+      route: `${flightInfo.estDepartureAirport} → ${flightInfo.estArrivalAirport}`,
+      timestamp: new Date().toISOString(),
+      date: flightDate || new Date().toISOString().split('T')[0]
+    };
+
+    // Get existing history
+    const existingHistory = JSON.parse(localStorage.getItem('flightSearchHistory') || '[]');
+
+    // Remove duplicates (same flight number searched recently)
+    const filteredHistory = existingHistory.filter(
+      item => item.flightNumber !== historyItem.flightNumber
+    );
+
+    // Add new search to beginning, keep max 15 items
+    const newHistory = [historyItem, ...filteredHistory].slice(0, 15);
+
+    // Save to localStorage
+    localStorage.setItem('flightSearchHistory', JSON.stringify(newHistory));
+
+    // Notify parent component if callback provided
+    if (onSearchHistoryUpdate) {
+      onSearchHistoryUpdate(newHistory);
+    }
+  };
 
   const fetchWeatherData = async (icaoCode) => {
     console.log('[fetchWeatherData] Called with ICAO:', icaoCode);
@@ -447,6 +480,9 @@ Keep it concise but informative, around 150-200 words.`;
 
         setFlightData(flightInfo);
 
+        // Save to search history
+        saveToSearchHistory(flightInfo);
+
         // Fetch weather data (convert IATA to ICAO codes)
         const depIcao = iataToIcao(flightInfo.estDepartureAirport);
         const arrIcao = iataToIcao(flightInfo.estArrivalAirport);
@@ -534,6 +570,23 @@ Keep it concise but informative, around 150-200 words.`;
       setLoading(false);
     }
   };
+
+  // Handle search from history trigger
+  useEffect(() => {
+    if (searchFromHistoryTrigger) {
+      setFlightNumber(searchFromHistoryTrigger.flightNumber);
+      setFlightDate(searchFromHistoryTrigger.date || '');
+      shouldAutoSearch.current = true;
+    }
+  }, [searchFromHistoryTrigger]);
+
+  // Auto-search when flight number is set from history
+  useEffect(() => {
+    if (shouldAutoSearch.current && flightNumber) {
+      shouldAutoSearch.current = false;
+      searchFlight();
+    }
+  }, [flightNumber]);
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {

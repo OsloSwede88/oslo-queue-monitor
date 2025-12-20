@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
-function Layout({ children, currentView, onNavigate, theme, onThemeToggle }) {
+function Layout({ children, currentView, onNavigate, theme, onThemeToggle, searchHistory, onSearchFromHistory, onClearHistory }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Lock body scroll when sidebar is open
@@ -33,6 +33,11 @@ function Layout({ children, currentView, onNavigate, theme, onThemeToggle }) {
   const openSidebar = () => setSidebarOpen(true);
   const closeSidebar = () => setSidebarOpen(false);
 
+  const handleSearchFromHistory = (historyItem) => {
+    closeSidebar(); // Close sidebar when searching
+    onSearchFromHistory(historyItem);
+  };
+
   return (
     <div className="app-layout">
       <Header
@@ -48,6 +53,9 @@ function Layout({ children, currentView, onNavigate, theme, onThemeToggle }) {
         onNavigate={onNavigate}
         theme={theme}
         onThemeToggle={onThemeToggle}
+        searchHistory={searchHistory}
+        onSearchFromHistory={handleSearchFromHistory}
+        onClearHistory={onClearHistory}
       />
 
       <main className="layout-main">

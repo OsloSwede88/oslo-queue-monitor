@@ -169,3 +169,25 @@
     background: rgba(var(--glass-bg-rgb), 0.9);
   }
 }
+
+/* Glass Terminal - Subtle Noise Texture */
+.glass-terminal-texture {
+  position: relative;
+}
+
+.glass-terminal-texture::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.02) 2px,
+      rgba(255, 255, 255, 0.02) 4px
+    );
+  pointer-events: none;
+  opacity: 0.3;
+  z-index: 1;
+}

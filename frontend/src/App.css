@@ -8,15 +8,15 @@
   position: relative;
 }
 
-/* Animated Gradient Background */
+/* Aviation Sky - Animated Gradient Background */
 body {
   background: linear-gradient(
     135deg,
-    #0F0F1E 0%,
-    #1A1A2E 25%,
-    #252540 50%,
-    #1A1A2E 75%,
-    #0F0F1E 100%
+    #0F172A 0%,
+    #1E293B 25%,
+    #334155 50%,
+    #1E293B 75%,
+    #0F172A 100%
   );
   background-size: 400% 400%;
   animation: gradient-shift 15s ease infinite;
@@ -28,11 +28,11 @@ body {
 [data-theme="light"] body {
   background: linear-gradient(
     135deg,
-    #F8F9FA 0%,
+    #F8FAFC 0%,
     #FFFFFF 25%,
-    #F1F3F5 50%,
+    #F1F5F9 50%,
     #FFFFFF 75%,
-    #F8F9FA 100%
+    #F8FAFC 100%
   );
   background-size: 400% 400%;
 }

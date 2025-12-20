@@ -9,6 +9,11 @@ function App() {
     // Get theme from localStorage or default to 'dark'
     return localStorage.getItem('theme') || 'dark';
   });
+  const [searchHistory, setSearchHistory] = useState(() => {
+    // Load search history from localStorage
+    return JSON.parse(localStorage.getItem('flightSearchHistory') || '[]');
+  });
+  const [searchFromHistoryTrigger, setSearchFromHistoryTrigger] = useState(null);
 
   // Apply theme to document
   useEffect(() => {
@@ -20,6 +25,20 @@ function App() {
     setTheme(prevTheme => prevTheme === 'dark' ? 'light' : 'dark');
   };
 
+  const handleSearchHistoryUpdate = (newHistory) => {
+    setSearchHistory(newHistory);
+  };
+
+  const handleSearchFromHistory = (historyItem) => {
+    setSearchFromHistoryTrigger(historyItem);
+    setCurrentView('flights'); // Switch to flights view
+  };
+
+  const clearSearchHistory = () => {
+    localStorage.removeItem('flightSearchHistory');
+    setSearchHistory([]);
+  };
+
   return (
     <div className="app">
       <Layout
@@ -27,8 +46,14 @@ function App() {
         onNavigate={setCurrentView}
         theme={theme}
         onThemeToggle={toggleTheme}
+        searchHistory={searchHistory}
+        onSearchFromHistory={handleSearchFromHistory}
+        onClearHistory={clearSearchHistory}
       >
-        <FlightTracker />
+        <FlightTracker
+          onSearchHistoryUpdate={handleSearchHistoryUpdate}
+          searchFromHistoryTrigger={searchFromHistoryTrigger}
+        />
 
         <footer className="footer">
           <p className="disclaimer text-tertiary">
