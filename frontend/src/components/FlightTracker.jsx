@@ -2,7 +2,16 @@ import { useState, useEffect, useRef } from 'react';
 import './FlightTracker.css';
 import FlightTimeline from './flight/FlightTimeline';
 import FlightMap from './flight/FlightMap';
-import QuickSearch from './QuickSearch';
+
+// Quick Search Airlines Data
+const QUICK_AIRLINES = [
+  { name: 'SAS', code: 'SK', icon: '🇸🇪', flights: ['SK4035', 'SK1429', 'SK1477', 'SK4000'] },
+  { name: 'Norwegian', code: 'DY', icon: '🇳🇴', flights: ['DY1302', 'DY620', 'DY1640', 'DY435'] },
+  { name: 'KLM', code: 'KL', icon: '🇳🇱', flights: ['KL1143', 'KL1001', 'KL1789', 'KL1991'] },
+  { name: 'Ryanair', code: 'FR', icon: '🇮🇪', flights: ['FR1392', 'FR1322', 'FR202', 'FR8394'] },
+  { name: 'Lufthansa', code: 'LH', icon: '🇩🇪', flights: ['LH400', 'LH861', 'LH2428', 'LH100'] },
+  { name: 'British Airways', code: 'BA', icon: '🇬🇧', flights: ['BA117', 'BA762', 'BA306', 'BA432'] }
+];
 
 function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSavedFlightsUpdate }) {
   const [flightNumber, setFlightNumber] = useState('');
@@ -15,6 +24,11 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
   const [aircraftImage, setAircraftImage] = useState(null);
   const [loadingAircraftInfo, setLoadingAircraftInfo] = useState(false);
   const [loadingAircraftImage, setLoadingAircraftImage] = useState(false);
+
+  // Quick Search dropdown state
+  const [quickSearchOpen, setQuickSearchOpen] = useState(false);
+  const [selectedAirline, setSelectedAirline] = useState(null);
+  const quickSearchRef = useRef(null);
 
   // Note: Real-time flight monitoring removed (backend deprecated)
 
@@ -862,13 +876,43 @@ Keep it concise but informative, around 150-200 words.`;
     }, 100);
   };
 
-  const handleQuickSearchFlight = (flightNumber) => {
+  // Quick Search handlers
+  const toggleQuickSearch = () => {
+    setQuickSearchOpen(!quickSearchOpen);
+    setSelectedAirline(null);
+  };
+
+  const selectAirline = (airline) => {
+    setSelectedAirline(selectedAirline === airline ? null : airline);
+  };
+
+  const selectFlight = (flightNumber) => {
     setFlightNumber(flightNumber);
     setFlightDate('');
+    setQuickSearchOpen(false);
+    setSelectedAirline(null);
     setTimeout(() => {
       searchFlight();
     }, 100);
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (quickSearchRef.current && !quickSearchRef.current.contains(event.target)) {
+        setQuickSearchOpen(false);
+        setSelectedAirline(null);
+      }
+    };
+
+    if (quickSearchOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [quickSearchOpen]);
 
   return (
     <div className="flight-tracker">
@@ -879,44 +923,80 @@ Keep it concise but informative, around 150-200 words.`;
         </div>
 
         <div className="flight-search glass glass-card">
-        <div className="search-inputs">
-          <input
-            type="text"
-            className="flight-input"
-            placeholder="Flight number (e.g., SK4035)"
-            value={flightNumber}
-            onChange={(e) => setFlightNumber(e.target.value)}
-            onKeyPress={handleKeyPress}
-          />
-          <input
-            type="date"
-            className="flight-input"
-            value={flightDate}
-            onChange={(e) => setFlightDate(e.target.value)}
-            max={new Date().toISOString().split('T')[0]}
-            lang="en-US"
-          />
-        </div>
-        <button
-          className="btn btn-primary search-btn"
-          onClick={searchFlight}
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <div className="spinner-small"></div>
-              Searching...
-            </>
-          ) : (
-            '🔍 Track Flight'
-          )}
-        </button>
-      </div>
+          <div className="search-inputs">
+            <div className="flight-input-wrapper" ref={quickSearchRef}>
+              <input
+                type="text"
+                className="flight-input"
+                placeholder="Flight number (e.g., SK4035)"
+                value={flightNumber}
+                onChange={(e) => setFlightNumber(e.target.value)}
+                onKeyPress={handleKeyPress}
+              />
+              <button
+                className="quick-search-toggle"
+                onClick={toggleQuickSearch}
+                type="button"
+                title="Quick Search"
+              >
+                ▼
+              </button>
 
-        {/* Quick Search - Show when no flight data */}
-        {!flightData && !loading && !error && (
-          <QuickSearch onSearchFlight={handleQuickSearchFlight} />
-        )}
+              {/* Quick Search Dropdown */}
+              {quickSearchOpen && (
+                <div className="quick-search-dropdown glass">
+                  {QUICK_AIRLINES.map((airline) => (
+                    <div key={airline.code} className="quick-airline">
+                      <button
+                        className={`quick-airline-btn ${selectedAirline === airline.code ? 'active' : ''}`}
+                        onClick={() => selectAirline(airline.code)}
+                      >
+                        <span>{airline.icon}</span>
+                        <span>{airline.name}</span>
+                        <span className="expand-arrow">{selectedAirline === airline.code ? '▲' : '▼'}</span>
+                      </button>
+                      {selectedAirline === airline.code && (
+                        <div className="quick-flights">
+                          {airline.flights.map((flight) => (
+                            <button
+                              key={flight}
+                              className="quick-flight-btn"
+                              onClick={() => selectFlight(flight)}
+                            >
+                              {flight}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <input
+              type="date"
+              className="flight-input"
+              value={flightDate}
+              onChange={(e) => setFlightDate(e.target.value)}
+              max={new Date().toISOString().split('T')[0]}
+              lang="en-US"
+            />
+          </div>
+          <button
+            className="btn btn-primary search-btn"
+            onClick={searchFlight}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <div className="spinner-small"></div>
+                Searching...
+              </>
+            ) : (
+              '🔍 Track Flight'
+            )}
+          </button>
+        </div>
 
         {/* Live Flight Map */}
         <FlightMap

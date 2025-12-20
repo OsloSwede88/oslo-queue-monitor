@@ -36,8 +36,135 @@
   margin-bottom: 1rem;
 }
 
+/* Quick Search Dropdown */
+.flight-input-wrapper {
+  position: relative;
+}
+
+.quick-search-toggle {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.quick-search-toggle:hover {
+  background: var(--color-surface);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.quick-search-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  background: rgba(var(--glass-bg-rgb), 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.quick-airline {
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.quick-airline:last-child {
+  border-bottom: none;
+}
+
+.quick-airline-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.quick-airline-btn:hover {
+  background: rgba(var(--glass-bg-rgb), 0.5);
+}
+
+.quick-airline-btn.active {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-accent);
+}
+
+.quick-airline-btn .expand-arrow {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--color-text-tertiary);
+}
+
+.quick-flights {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  padding: 0.5rem 1rem 1rem;
+  background: rgba(var(--glass-bg-rgb), 0.3);
+}
+
+.quick-flight-btn {
+  padding: 0.5rem;
+  background: rgba(var(--glass-bg-rgb), 0.5);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.quick-flight-btn:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
 .flight-input {
   padding: 0.875rem 1rem;
+  padding-right: 3rem; /* Space for dropdown button */
   border: 2px solid var(--color-border);
   border-radius: 0.5rem;
   background: var(--color-bg-tertiary);
@@ -500,6 +627,14 @@
 
   .flight-tracker {
     padding: 0.5rem 0.25rem;
+  }
+
+  .quick-flights {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-search-dropdown {
+    max-height: 250px;
   }
 }
 
