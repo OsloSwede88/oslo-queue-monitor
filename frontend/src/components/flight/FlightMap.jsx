@@ -9,21 +9,74 @@ const FR24_PROXY = '/api/flightradar24-proxy';
 
 // Airport coordinates lookup for common airports
 const AIRPORT_COORDS = {
+  // Norwegian airports
   'OSL': { lat: 60.1939, lon: 11.1004, name: 'Oslo Gardermoen' },
   'BGO': { lat: 60.2934, lon: 5.2181, name: 'Bergen Flesland' },
   'TRD': { lat: 63.4578, lon: 10.9239, name: 'Trondheim Værnes' },
   'SVG': { lat: 58.8767, lon: 5.6378, name: 'Stavanger Sola' },
+  'AES': { lat: 62.5603, lon: 6.1197, name: 'Ålesund' },
+  'BOO': { lat: 67.2692, lon: 14.3653, name: 'Bodø' },
+  'TOS': { lat: 69.6833, lon: 18.9189, name: 'Tromsø' },
+  'EVE': { lat: 68.4913, lon: 16.6781, name: 'Harstad/Narvik' },
+  'HAU': { lat: 59.3453, lon: 5.2083, name: 'Haugesund' },
+  'KRS': { lat: 58.2042, lon: 8.0854, name: 'Kristiansand' },
+  'MOL': { lat: 62.7447, lon: 7.2625, name: 'Molde' },
+  'TRF': { lat: 59.1867, lon: 10.2586, name: 'Sandefjord Torp' },
+  'RYG': { lat: 59.3789, lon: 10.7856, name: 'Moss Rygge' },
+  'ALF': { lat: 69.9761, lon: 23.3717, name: 'Alta' },
+  'KKN': { lat: 69.7258, lon: 29.8914, name: 'Kirkenes' },
+  'LKL': { lat: 68.1525, lon: 13.6094, name: 'Leknes' },
+  'BNN': { lat: 65.4608, lon: 12.2169, name: 'Brønnøysund' },
+  'SSJ': { lat: 65.9564, lon: 12.4689, name: 'Sandnessjøen' },
+  'MJF': { lat: 65.7839, lon: 13.2153, name: 'Mosjøen' },
+  'FDE': { lat: 61.5833, lon: 5.7672, name: 'Førde' },
+  'FRO': { lat: 61.5856, lon: 5.0247, name: 'Florø' },
+  'SKN': { lat: 69.7883, lon: 20.9597, name: 'Skagen' },
+  'VDS': { lat: 68.3506, lon: 17.8228, name: 'Evenes' },
+  'LYR': { lat: 78.2461, lon: 15.4656, name: 'Svalbard Longyear' },
+
+  // Nordic airports
   'CPH': { lat: 55.6181, lon: 12.6561, name: 'Copenhagen' },
   'ARN': { lat: 59.6519, lon: 17.9186, name: 'Stockholm Arlanda' },
+  'GOT': { lat: 57.6628, lon: 12.2798, name: 'Gothenburg Landvetter' },
+  'MMX': { lat: 55.5361, lon: 13.3761, name: 'Malmö' },
   'HEL': { lat: 60.3172, lon: 24.9633, name: 'Helsinki-Vantaa' },
+  'AAL': { lat: 57.0928, lon: 9.8494, name: 'Aalborg' },
+  'BLL': { lat: 55.7403, lon: 9.1517, name: 'Billund' },
+  'AAR': { lat: 56.3000, lon: 10.6190, name: 'Aarhus' },
+  'RKV': { lat: 64.1300, lon: -21.9406, name: 'Reykjavik' },
+  'KEF': { lat: 63.9850, lon: -22.6056, name: 'Keflavik' },
+
+  // Major European airports
   'LHR': { lat: 51.4700, lon: -0.4543, name: 'London Heathrow' },
+  'LGW': { lat: 51.1481, lon: -0.1903, name: 'London Gatwick' },
   'CDG': { lat: 49.0097, lon: 2.5479, name: 'Paris CDG' },
   'AMS': { lat: 52.3105, lon: 4.7683, name: 'Amsterdam Schiphol' },
   'FRA': { lat: 50.0379, lon: 8.5622, name: 'Frankfurt' },
+  'MUC': { lat: 48.3537, lon: 11.7750, name: 'Munich' },
   'MAD': { lat: 40.4983, lon: -3.5676, name: 'Madrid' },
   'BCN': { lat: 41.2971, lon: 2.0785, name: 'Barcelona' },
   'FCO': { lat: 41.8003, lon: 12.2389, name: 'Rome Fiumicino' },
-  'MUC': { lat: 48.3537, lon: 11.7750, name: 'Munich' },
+  'VIE': { lat: 48.1103, lon: 16.5697, name: 'Vienna' },
+  'ZRH': { lat: 47.4647, lon: 8.5492, name: 'Zurich' },
+  'BRU': { lat: 50.9014, lon: 4.4844, name: 'Brussels' },
+  'DUB': { lat: 53.4213, lon: -6.2701, name: 'Dublin' },
+  'LIS': { lat: 38.7813, lon: -9.1361, name: 'Lisbon' },
+  'ATH': { lat: 37.9364, lon: 23.9445, name: 'Athens' },
+  'PRG': { lat: 50.1008, lon: 14.2600, name: 'Prague' },
+  'WAW': { lat: 52.1657, lon: 20.9671, name: 'Warsaw' },
+  'BUD': { lat: 47.4399, lon: 19.2556, name: 'Budapest' },
+
+  // Popular destinations
+  'AGP': { lat: 36.6749, lon: -4.4991, name: 'Malaga' },
+  'ALC': { lat: 38.2822, lon: -0.5581, name: 'Alicante' },
+  'PMI': { lat: 39.5517, lon: 2.7388, name: 'Palma de Mallorca' },
+  'TFS': { lat: 28.0445, lon: -16.5725, name: 'Tenerife South' },
+  'LPA': { lat: 27.9319, lon: -15.3866, name: 'Gran Canaria' },
+  'FAO': { lat: 37.0144, lon: -7.9659, name: 'Faro' },
+  'NCE': { lat: 43.6584, lon: 7.2159, name: 'Nice' },
+  'VCE': { lat: 45.5053, lon: 12.3519, name: 'Venice' },
+  'MXP': { lat: 45.6306, lon: 8.7281, name: 'Milan Malpensa' },
 };
 
 // Component to fetch and display a specific flight on the map
@@ -355,7 +408,7 @@ function FlightMap({ onFlightSelect, searchFlightNumber, flightData }) {
                 </span>
               )}
               {status && (
-                <span className="data-source" style={{ color: status.includes('Error') || status.includes('Rate limited') || status.includes('not found') ? '#ef4444' : '#fbbf24' }}>
+                <span className="data-source" style={{ color: status.includes('Error') || status.includes('Rate limited') || status.includes('not found') ? '#ef4444' : '#fbbf24', borderLeft: 'none', paddingLeft: '0' }}>
                   {status}
                 </span>
               )}
