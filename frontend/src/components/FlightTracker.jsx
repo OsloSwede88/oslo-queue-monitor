@@ -3,17 +3,16 @@ import './FlightTracker.css';
 import FlightTimeline from './flight/FlightTimeline';
 import FlightMap from './flight/FlightMap';
 
-// Quick Search Airlines Data
+// Quick Search Airlines Data - Only commonly scheduled flights
 const QUICK_AIRLINES = [
   {
     name: 'SAS',
     code: 'SK',
     icon: '🇸🇪',
     flights: [
-      'SK4035', 'SK4000', 'SK1429', 'SK1477', 'SK1415', 'SK1416', 'SK805', 'SK806',
-      'SK1471', 'SK1472', 'SK463', 'SK464', 'SK1868', 'SK1869', 'SK4601', 'SK4602',
-      'SK235', 'SK236', 'SK1463', 'SK1464', 'SK4783', 'SK4784', 'SK4001', 'SK4002',
-      'SK1437', 'SK1438', 'SK4037', 'SK4038', 'SK4411', 'SK4412', 'SK1401', 'SK1402'
+      'SK1429', 'SK1477', 'SK1415', 'SK1416', 'SK805', 'SK806',
+      'SK1471', 'SK1472', 'SK463', 'SK464', 'SK235', 'SK236',
+      'SK1463', 'SK1464', 'SK1437', 'SK1438', 'SK1401', 'SK1402'
     ]
   },
   {
