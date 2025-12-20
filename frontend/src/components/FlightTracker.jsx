@@ -947,13 +947,11 @@ Keep it concise but informative, around 150-200 words.`;
   };
 
   const selectFlight = (flightNumber) => {
-    setFlightNumber(flightNumber);
     setFlightDate('');
     setQuickSearchOpen(false);
     setSelectedAirline(null);
-    setTimeout(() => {
-      searchFlight();
-    }, 100);
+    shouldAutoSearch.current = true;
+    setFlightNumber(flightNumber);
   };
 
   // Close dropdown when clicking outside
