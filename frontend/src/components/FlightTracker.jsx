@@ -773,12 +773,6 @@ Keep it concise but informative, around 150-200 words.`;
           <p>Track any flight in real-time</p>
         </div>
 
-        {/* Live Flight Map */}
-        <FlightMap
-          onFlightSelect={handleFlightSelectFromMap}
-          searchFlightNumber={flightData?.flight_iata || flightData?.flight_icao || (flightData ? flightNumber : null)}
-        />
-
         <div className="flight-search glass glass-card">
         <div className="search-inputs">
           <input
@@ -813,6 +807,12 @@ Keep it concise but informative, around 150-200 words.`;
           )}
         </button>
       </div>
+
+        {/* Live Flight Map */}
+        <FlightMap
+          onFlightSelect={handleFlightSelectFromMap}
+          searchFlightNumber={flightData?.flight_iata || flightData?.flight_icao || (flightData ? flightNumber : null)}
+        />
 
       {error && (
         <div className="flight-error">
