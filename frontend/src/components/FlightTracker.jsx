@@ -1417,17 +1417,6 @@ Keep it concise but informative, around 150-200 words.`;
             </div>
         </div>
       )}
-
-      {!flightData && !error && !loading && (
-        <div className="flight-empty-state glass glass-card">
-          <div className="empty-icon">✈️</div>
-          <h3>Track Your Flight</h3>
-          <p>Enter a flight number to see real-time tracking information</p>
-          <div className="empty-examples">
-            <strong>Examples:</strong> SK4035, DY1234, BA123
-          </div>
-        </div>
-      )}
       </div>
     </div>
   );

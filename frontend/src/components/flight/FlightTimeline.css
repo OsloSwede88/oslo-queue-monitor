@@ -81,7 +81,7 @@
 /* Timeline Track Container */
 .timeline-track-container {
   position: relative;
-  padding: 2.5rem 0;
+  padding: 2.5rem 0 3.5rem 0;
 }
 
 /* Timeline Track */
@@ -237,6 +237,7 @@
 .timeline-time {
   font-size: 0.6875rem;
   font-weight: 500;
+  color: var(--color-text-tertiary);
 }
 
 /* Mobile Adjustments */
@@ -246,7 +247,7 @@
   }
 
   .timeline-track-container {
-    padding: 2rem 0;
+    padding: 2rem 0 3rem 0;
   }
 
   .timeline-label {

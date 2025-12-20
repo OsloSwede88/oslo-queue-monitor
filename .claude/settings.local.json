@@ -12,7 +12,24 @@
       "Bash(npx playwright install chromium)",
       "Bash(npm run dev:backend:*)",
       "Bash(npm run dev:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(brew install:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(npm install:*)",
+      "Bash(git commit:*)",
+      "Bash(source:*)",
+      "Bash(python capture_flight_logs.py:*)",
+      "Bash(npm run build:*)",
+      "Bash(git merge:*)",
+      "Bash(git push:*)",
+      "Bash(python test_weather.py:*)",
+      "Bash(railway login:*)",
+      "Bash(python3:*)",
+      "Bash(lsof:*)",
+      "Bash(vercel dev:*)",
+      "Bash(vercel --prod)",
+      "Bash(vercel:*)"
     ]
   }
 }

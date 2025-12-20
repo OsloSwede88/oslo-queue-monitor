@@ -80,10 +80,11 @@ body {
 }
 
 .disclaimer {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   margin: 0;
   max-width: var(--container-max-width);
   margin: 0 auto;
+  opacity: 0.7;
 }
 
 /* App Layout Wrapper */
