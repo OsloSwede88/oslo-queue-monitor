@@ -82,7 +82,6 @@ const AIRPORT_COORDS = {
 // Component to fetch and display a specific flight on the map
 function FlightsLayer({ onFlightsUpdate, onStatusUpdate, searchFlightNumber, flightData }) {
   const map = useMap();
-  const lastFetchRef = useRef(0);
 
   // Fetch flight when searchFlightNumber changes
   useEffect(() => {
@@ -172,25 +171,12 @@ function FlightsLayer({ onFlightsUpdate, onStatusUpdate, searchFlightNumber, fli
     };
 
     const fetchFlight = async () => {
-      // Rate limiting: minimum 5 seconds between requests
-      const now = Date.now();
-      const timeSinceLastFetch = now - lastFetchRef.current;
-      const minInterval = 5000; // 5 seconds
-
-      if (timeSinceLastFetch < minInterval) {
-        const waitTime = Math.ceil((minInterval - timeSinceLastFetch) / 1000);
-        console.log(`[FR24] Rate limit: waiting ${waitTime}s`);
-        if (onStatusUpdate) onStatusUpdate(`Please wait ${waitTime}s...`);
-        return;
-      }
-
       try {
         // Search for specific flight
         const url = `${FR24_PROXY}?flights=${searchFlightNumber}`;
 
         console.log('[FR24] Searching for flight:', searchFlightNumber);
         if (onStatusUpdate) onStatusUpdate('Searching...');
-        lastFetchRef.current = now;
 
         const response = await fetch(url);
 
