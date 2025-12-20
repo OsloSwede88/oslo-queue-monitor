@@ -995,9 +995,10 @@ Keep it concise but informative, around 150-200 words.`;
                 className="quick-search-toggle"
                 onClick={toggleQuickSearch}
                 type="button"
-                title="Quick Search"
+                title="Quick access to popular flights"
               >
-                ▼
+                <span className="quick-search-icon">⚡</span>
+                <span className="quick-search-label">Quick Search</span>
               </button>
             </div>
             <input
