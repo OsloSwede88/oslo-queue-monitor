@@ -81,7 +81,7 @@
 /* Timeline Track Container */
 .timeline-track-container {
   position: relative;
-  padding: 2.5rem 0 5.5rem 0;
+  padding: 2.5rem 3rem;
 }
 
 /* Timeline Track */
@@ -247,7 +247,7 @@
   }
 
   .timeline-track-container {
-    padding: 2rem 0 5rem 0;
+    padding: 2rem 2rem;
   }
 
   .timeline-label {
