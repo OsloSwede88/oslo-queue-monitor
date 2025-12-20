@@ -39,6 +39,62 @@ function FlightsLayer({ onFlightsUpdate, onStatusUpdate, searchFlightNumber, fli
       return;
     }
 
+    // Helper function to show last known location when flight not in FR24
+    const showLastKnownLocation = () => {
+      if (!flightData) return;
+
+      const status = flightData.flightStatus;
+      let airportCode = null;
+      let locationName = null;
+
+      // Determine which airport to show based on flight status
+      if (status === 'landed') {
+        airportCode = flightData.estArrivalAirport;
+        locationName = 'arrival';
+      } else if (status === 'scheduled' || !status) {
+        airportCode = flightData.estDepartureAirport;
+        locationName = 'departure';
+      } else {
+        // Active but not in FR24 - try arrival first, then departure
+        airportCode = flightData.estArrivalAirport || flightData.estDepartureAirport;
+        locationName = 'last known';
+      }
+
+      const airportCoords = airportCode ? AIRPORT_COORDS[airportCode] : null;
+
+      if (airportCoords) {
+        // Create a fallback flight marker at the airport
+        const fallbackFlight = {
+          fr24_id: 'fallback',
+          flight: searchFlightNumber,
+          callsign: searchFlightNumber,
+          lat: airportCoords.lat,
+          lon: airportCoords.lon,
+          track: 0,
+          alt: 0,
+          gspeed: 0,
+          type: flightData.aircraftModel || 'N/A',
+          squawk: null,
+          origin_country: airportCoords.name,
+          isLastKnown: true,
+          locationName: locationName,
+          airportName: airportCoords.name
+        };
+
+        map.flyTo([airportCoords.lat, airportCoords.lon], 10, {
+          duration: 1.5
+        });
+
+        if (onStatusUpdate) {
+          onStatusUpdate(`Last known location: ${airportCoords.name}`);
+        }
+        onFlightsUpdate([fallbackFlight]);
+      } else {
+        if (onStatusUpdate) onStatusUpdate('Flight not currently airborne');
+        onFlightsUpdate([]);
+      }
+    };
+
     const fetchFlight = async () => {
       // Rate limiting: minimum 5 seconds between requests
       const now = Date.now();
@@ -85,80 +141,34 @@ function FlightsLayer({ onFlightsUpdate, onStatusUpdate, searchFlightNumber, fli
             if (onStatusUpdate) onStatusUpdate(null);
             onFlightsUpdate(flights);
           } else {
-            // No live flight found - check if we have flight data to show last known location
-            if (flightData) {
-              const status = flightData.flightStatus;
-              let airportCode = null;
-              let locationName = null;
-
-              // Determine which airport to show based on flight status
-              if (status === 'landed') {
-                airportCode = flightData.estArrivalAirport;
-                locationName = 'arrival';
-              } else if (status === 'scheduled' || !status) {
-                airportCode = flightData.estDepartureAirport;
-                locationName = 'departure';
-              } else {
-                // Active but not in FR24 - try arrival first, then departure
-                airportCode = flightData.estArrivalAirport || flightData.estDepartureAirport;
-                locationName = 'last known';
-              }
-
-              const airportCoords = airportCode ? AIRPORT_COORDS[airportCode] : null;
-
-              if (airportCoords) {
-                // Create a fallback flight marker at the airport
-                const fallbackFlight = {
-                  fr24_id: 'fallback',
-                  flight: searchFlightNumber,
-                  callsign: searchFlightNumber,
-                  lat: airportCoords.lat,
-                  lon: airportCoords.lon,
-                  track: 0,
-                  alt: 0,
-                  gspeed: 0,
-                  type: flightData.aircraftModel || 'N/A',
-                  squawk: null,
-                  origin_country: airportCoords.name,
-                  isLastKnown: true,
-                  locationName: locationName,
-                  airportName: airportCoords.name
-                };
-
-                map.flyTo([airportCoords.lat, airportCoords.lon], 10, {
-                  duration: 1.5
-                });
-
-                if (onStatusUpdate) {
-                  onStatusUpdate(`Last known location: ${airportCoords.name}`);
-                }
-                onFlightsUpdate([fallbackFlight]);
-              } else {
-                if (onStatusUpdate) onStatusUpdate('Flight not currently airborne');
-                onFlightsUpdate([]);
-              }
-            } else {
-              if (onStatusUpdate) onStatusUpdate('Flight not found');
-              onFlightsUpdate([]);
-            }
+            // No live flight found - show last known location
+            showLastKnownLocation();
           }
         } else {
           const errorText = await response.text();
           console.error('[FR24] ❌ API error:', response.status, errorText);
-          // Don't show technical API errors to users - they can't fix them
-          if (onStatusUpdate) onStatusUpdate(null);
-          onFlightsUpdate([]);
+          // API error - try to show last known location if we have flight data
+          if (flightData) {
+            showLastKnownLocation();
+          } else {
+            if (onStatusUpdate) onStatusUpdate(null);
+            onFlightsUpdate([]);
+          }
         }
       } catch (error) {
         console.error('[FR24] ❌ Error fetching flight:', error);
-        // Don't show connection errors - just fail silently
-        if (onStatusUpdate) onStatusUpdate(null);
-        onFlightsUpdate([]);
+        // Connection error - try to show last known location if we have flight data
+        if (flightData) {
+          showLastKnownLocation();
+        } else {
+          if (onStatusUpdate) onStatusUpdate(null);
+          onFlightsUpdate([]);
+        }
       }
     };
 
     fetchFlight();
-  }, [searchFlightNumber, map, onFlightsUpdate, onStatusUpdate]);
+  }, [searchFlightNumber, flightData, map, onFlightsUpdate, onStatusUpdate]);
 
   return null;
 }
