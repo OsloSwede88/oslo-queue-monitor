@@ -452,48 +452,112 @@ Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
           arrivalDelay: null
         };
 
-        // If AirLabs doesn't have aircraft data, try AviationStack as fallback
+        // If AirLabs doesn't have aircraft data, try multiple fallbacks in order
         if (!flightInfo.aircraftRegistration && !flightInfo.aircraftModel) {
-          const aviationStackKey = import.meta.env.VITE_AVIATIONSTACK_API_KEY;
-
-          if (aviationStackKey && aviationStackKey !== API_DEFAULTS.PLACEHOLDER_AVIATIONSTACK) {
+          // Fallback 1: FlightAware AeroAPI (10,000 requests/month free)
+          const flightAwareKey = import.meta.env.VITE_FLIGHTAWARE_API_KEY;
+          if (flightAwareKey && flightAwareKey !== API_DEFAULTS.PLACEHOLDER_FLIGHTAWARE) {
             try {
-              const asResponse = await fetch(
-                `https://api.aviationstack.com/v1/flights?access_key=${aviationStackKey}&flight_iata=${flightNumber.toUpperCase()}`
+              const faResponse = await fetch(
+                `https://aeroapi.flightaware.com/aeroapi/flights/${flightNumber.toUpperCase()}`,
+                {
+                  headers: {
+                    'x-apikey': flightAwareKey
+                  }
+                }
               );
 
-              if (asResponse.ok) {
-                const asData = await asResponse.json();
-
-                if (asData.data && asData.data.length > 0) {
-                  const asFlight = asData.data[0];
-
-                  // Update flightInfo with AviationStack aircraft data
-                  if (asFlight.aircraft) {
-                    // Get hex code (icao24) - this is what we need for photos!
-                    if (asFlight.aircraft.icao24) {
-                      flightInfo.icao24 = asFlight.aircraft.icao24;
-                    }
-                    // Get registration if available
-                    if (asFlight.aircraft.registration) {
-                      flightInfo.aircraftRegistration = asFlight.aircraft.registration;
-                    }
-                    // Get aircraft type codes
-                    if (asFlight.aircraft.iata) {
-                      flightInfo.aircraftIcao = asFlight.aircraft.iata;
-                      flightInfo.aircraftModel = asFlight.aircraft.iata;
-                    }
-                    if (asFlight.aircraft.icao) {
-                      flightInfo.aircraftIcao = asFlight.aircraft.icao;
-                    }
+              if (faResponse.ok) {
+                const faData = await faResponse.json();
+                if (faData.flights && faData.flights.length > 0) {
+                  const faFlight = faData.flights[0];
+                  if (faFlight.registration) {
+                    flightInfo.aircraftRegistration = faFlight.registration;
+                  }
+                  if (faFlight.aircraft_type) {
+                    flightInfo.aircraftModel = faFlight.aircraft_type;
+                    flightInfo.aircraftIcao = faFlight.aircraft_type;
                   }
                 }
               }
             } catch (err) {
-              // AviationStack fallback failed
+              // FlightAware fallback failed, continue to next
             }
-          } else {
-            // AviationStack API key not configured
+          }
+
+          // Fallback 2: OpenSky Network (free, unlimited but basic data)
+          if (!flightInfo.aircraftRegistration) {
+            const openSkyClientId = import.meta.env.VITE_OPENSKY_CLIENT_ID;
+            const openSkySecret = import.meta.env.VITE_OPENSKY_CLIENT_SECRET;
+
+            if (openSkyClientId && openSkySecret) {
+              try {
+                // OpenSky uses callsign, need to convert flight number to callsign
+                // Try searching by flight number pattern (e.g., SK4035 → SAS4035)
+                const osResponse = await fetch(
+                  `https://opensky-network.org/api/flights/all?begin=${Math.floor(Date.now() / 1000) - 86400}&end=${Math.floor(Date.now() / 1000)}`,
+                  {
+                    headers: {
+                      'Authorization': 'Basic ' + btoa(`${openSkyClientId}:${openSkySecret}`)
+                    }
+                  }
+                );
+
+                if (osResponse.ok) {
+                  const osData = await osResponse.json();
+                  // Find matching flight by callsign
+                  const matchingFlight = osData.find(f =>
+                    f.callsign && f.callsign.trim().toUpperCase() === flightNumber.toUpperCase()
+                  );
+
+                  if (matchingFlight && matchingFlight.icao24) {
+                    flightInfo.icao24 = matchingFlight.icao24;
+                  }
+                }
+              } catch (err) {
+                // OpenSky fallback failed, continue to next
+              }
+            }
+          }
+
+          // Fallback 3: AviationStack (as final fallback)
+          if (!flightInfo.aircraftRegistration && !flightInfo.aircraftModel) {
+            const aviationStackKey = import.meta.env.VITE_AVIATIONSTACK_API_KEY;
+
+            if (aviationStackKey && aviationStackKey !== API_DEFAULTS.PLACEHOLDER_AVIATIONSTACK) {
+              try {
+                const asResponse = await fetch(
+                  `https://api.aviationstack.com/v1/flights?access_key=${aviationStackKey}&flight_iata=${flightNumber.toUpperCase()}`
+                );
+
+                if (asResponse.ok) {
+                  const asData = await asResponse.json();
+
+                  if (asData.data && asData.data.length > 0) {
+                    const asFlight = asData.data[0];
+
+                    // Update flightInfo with AviationStack aircraft data
+                    if (asFlight.aircraft) {
+                      if (asFlight.aircraft.icao24) {
+                        flightInfo.icao24 = asFlight.aircraft.icao24;
+                      }
+                      if (asFlight.aircraft.registration) {
+                        flightInfo.aircraftRegistration = asFlight.aircraft.registration;
+                      }
+                      if (asFlight.aircraft.iata) {
+                        flightInfo.aircraftIcao = asFlight.aircraft.iata;
+                        flightInfo.aircraftModel = asFlight.aircraft.iata;
+                      }
+                      if (asFlight.aircraft.icao) {
+                        flightInfo.aircraftIcao = asFlight.aircraft.icao;
+                      }
+                    }
+                  }
+                }
+              } catch (err) {
+                // All fallbacks exhausted
+              }
+            }
           }
         }
 

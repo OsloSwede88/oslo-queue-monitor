@@ -38,6 +38,7 @@ export const ALTITUDE = {
 export const API_DEFAULTS = {
   PLACEHOLDER_AIRLABS: 'your_airlabs_api_key_here',
   PLACEHOLDER_CHECKWX: 'your_checkwx_api_key_here',
+  PLACEHOLDER_FLIGHTAWARE: 'YOUR_FLIGHTAWARE_API_KEY_HERE',
   PLACEHOLDER_AVIATIONSTACK: 'your_aviationstack_api_key_here',
   PLACEHOLDER_OPENROUTER: 'your_openrouter_api_key_here',
 };
