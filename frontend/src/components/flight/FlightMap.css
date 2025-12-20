@@ -63,6 +63,15 @@
   color: var(--primary-light, #C77DFF);
 }
 
+.aircraft-grounded {
+  opacity: 0.6;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4)) grayscale(30%);
+}
+
+.aircraft-grounded:hover {
+  opacity: 0.8;
+}
+
 .aircraft-alt {
   position: absolute;
   top: -8px;

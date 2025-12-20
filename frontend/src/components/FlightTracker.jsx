@@ -812,6 +812,7 @@ Keep it concise but informative, around 150-200 words.`;
         <FlightMap
           onFlightSelect={handleFlightSelectFromMap}
           searchFlightNumber={flightData?.flight_iata || flightData?.flight_icao || (flightData ? flightNumber : null)}
+          flightData={flightData}
         />
 
       {error && (
