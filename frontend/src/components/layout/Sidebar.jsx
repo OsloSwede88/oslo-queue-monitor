@@ -1,6 +1,48 @@
+import { useState } from 'react';
 import './Sidebar.css';
 
+const QUICK_SEARCH_AIRLINES = [
+  {
+    name: 'SAS',
+    code: 'SK',
+    icon: '🇸🇪',
+    flights: ['SK4035', 'SK1429', 'SK1477', 'SK4000']
+  },
+  {
+    name: 'Norwegian',
+    code: 'DY',
+    icon: '🇳🇴',
+    flights: ['DY1302', 'DY620', 'DY1640', 'DY435']
+  },
+  {
+    name: 'KLM',
+    code: 'KL',
+    icon: '🇳🇱',
+    flights: ['KL1143', 'KL1001', 'KL1789', 'KL1991']
+  },
+  {
+    name: 'Ryanair',
+    code: 'FR',
+    icon: '🇮🇪',
+    flights: ['FR1392', 'FR1322', 'FR202', 'FR8394']
+  },
+  {
+    name: 'Lufthansa',
+    code: 'LH',
+    icon: '🇩🇪',
+    flights: ['LH400', 'LH861', 'LH2428', 'LH100']
+  },
+  {
+    name: 'British Airways',
+    code: 'BA',
+    icon: '🇬🇧',
+    flights: ['BA117', 'BA762', 'BA306', 'BA432']
+  }
+];
+
 function Sidebar({ isOpen, onClose, currentView, onNavigate, theme, onThemeToggle, searchHistory = [], onSearchFromHistory, onClearHistory, savedFlights = [], onSearchFromSaved, onRemoveSaved }) {
+  const [expandedAirline, setExpandedAirline] = useState(null);
+
   const handleNavigation = (view) => {
     onNavigate(view);
     // Always close sidebar after navigation
@@ -24,6 +66,14 @@ function Sidebar({ isOpen, onClose, currentView, onNavigate, theme, onThemeToggl
     if (window.confirm('Clear all search history?')) {
       onClearHistory();
     }
+  };
+
+  const toggleAirline = (code) => {
+    setExpandedAirline(expandedAirline === code ? null : code);
+  };
+
+  const handleQuickSearch = (flightNumber) => {
+    onSearchFromHistory({ flightNumber, date: '' });
   };
 
   const formatTimestamp = (timestamp) => {
@@ -81,6 +131,43 @@ function Sidebar({ isOpen, onClose, currentView, onNavigate, theme, onThemeToggl
             <span className="nav-icon">⚙️</span>
             <span className="nav-label">Settings</span>
           </button>
+
+          <div className="nav-divider"></div>
+
+          {/* Quick Search Section */}
+          <div className="sidebar-section-header">
+            <span className="section-title">Quick Search</span>
+          </div>
+          <div className="quick-search-airlines">
+            {QUICK_SEARCH_AIRLINES.map((airline) => (
+              <div key={airline.code} className="quick-airline-item">
+                <button
+                  className={`quick-airline-header ${expandedAirline === airline.code ? 'expanded' : ''}`}
+                  onClick={() => toggleAirline(airline.code)}
+                >
+                  <span className="quick-airline-icon">{airline.icon}</span>
+                  <span className="quick-airline-name">{airline.name}</span>
+                  <span className="quick-expand-icon">
+                    {expandedAirline === airline.code ? '▼' : '▶'}
+                  </span>
+                </button>
+                {expandedAirline === airline.code && (
+                  <div className="quick-flights-list">
+                    {airline.flights.map((flight) => (
+                      <button
+                        key={flight}
+                        className="quick-flight-btn"
+                        onClick={() => handleQuickSearch(flight)}
+                      >
+                        <span className="quick-flight-number">{flight}</span>
+                        <span className="quick-search-icon">🔍</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
 
           <div className="nav-divider"></div>
 

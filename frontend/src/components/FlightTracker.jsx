@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import './FlightTracker.css';
 import FlightTimeline from './flight/FlightTimeline';
 import FlightMap from './flight/FlightMap';
+import QuickSearch from './QuickSearch';
 
 function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSavedFlightsUpdate }) {
   const [flightNumber, setFlightNumber] = useState('');
@@ -861,6 +862,14 @@ Keep it concise but informative, around 150-200 words.`;
     }, 100);
   };
 
+  const handleQuickSearchFlight = (flightNumber) => {
+    setFlightNumber(flightNumber);
+    setFlightDate('');
+    setTimeout(() => {
+      searchFlight();
+    }, 100);
+  };
+
   return (
     <div className="flight-tracker">
       <div className="container">
@@ -903,6 +912,11 @@ Keep it concise but informative, around 150-200 words.`;
           )}
         </button>
       </div>
+
+        {/* Quick Search - Show when no flight data */}
+        {!flightData && !loading && !error && (
+          <QuickSearch onSearchFlight={handleQuickSearchFlight} />
+        )}
 
         {/* Live Flight Map */}
         <FlightMap
