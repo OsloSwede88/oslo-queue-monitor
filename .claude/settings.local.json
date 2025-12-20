@@ -29,7 +29,8 @@
       "Bash(lsof:*)",
       "Bash(vercel dev:*)",
       "Bash(vercel --prod)",
-      "Bash(vercel:*)"
+      "Bash(vercel:*)",
+      "Bash(python:*)"
     ]
   }
 }

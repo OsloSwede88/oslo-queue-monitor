@@ -43,22 +43,26 @@ Flight Search
     ↓
 AirLabs API (primary flight data)
     ↓
-Has aircraft registration? ─YES→ Fetch Planespotters photo ✅
+Has aircraft registration? ─YES→ Fetch Planespotters photo (specific aircraft) ✅
     ↓ NO
 FlightAware AeroAPI (10k/month free)
     ↓
-Has registration? ─YES→ Fetch Planespotters photo ✅
+Has registration? ─YES→ Fetch Planespotters photo (specific aircraft) ✅
+    ↓ NO
+Has aircraft type? ─YES→ Fetch Wikimedia Commons photo (generic aircraft type) 📷
     ↓ NO
 OpenSky Network (unlimited, free)
     ↓
-Has ICAO24? ─YES→ Fetch Planespotters photo ✅
+Has ICAO24? ─YES→ Fetch Planespotters photo (specific aircraft) ✅
     ↓ NO
 AviationStack (1k/month free)
     ↓
-Has registration? ─YES→ Fetch Planespotters photo ✅
+Has registration? ─YES→ Fetch Planespotters photo (specific aircraft) ✅
     ↓ NO
 No aircraft photo available ❌
 ```
+
+**New Feature:** When registration data is unavailable but aircraft type is known (e.g., "E295"), the app automatically searches Wikimedia Commons for generic photos of that aircraft type. A badge indicates when showing a generic aircraft photo vs the specific aircraft.
 
 ## Current API Status
 

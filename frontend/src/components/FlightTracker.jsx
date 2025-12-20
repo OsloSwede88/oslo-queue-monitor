@@ -137,8 +137,8 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
     return null;
   };
 
-  const fetchAircraftImage = async (registration, icao24) => {
-    if (!registration && !icao24) return null;
+  const fetchAircraftImage = async (registration, icao24, airline, aircraftType) => {
+    if (!registration && !icao24 && !aircraftType) return null;
 
     // Helper to parse aircraft info from Planespotters URL
     const parseAircraftFromUrl = (url) => {
@@ -241,6 +241,79 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
     } catch (err) {
       // Error fetching aircraft image
     }
+
+    // Fallback 3: Search by aircraft type using Wikimedia Commons
+    // When registration is unavailable, search for generic aircraft type photos
+    if (aircraftType && !registration && !icao24) {
+      try{
+        // Clean aircraft type for search (e.g., "E295" -> "Embraer E295")
+        const aircraftManufacturers = {
+          'A': 'Airbus',
+          'B': 'Boeing',
+          'E': 'Embraer',
+          'CRJ': 'Bombardier',
+          'ATR': 'ATR',
+          'MD': 'McDonnell Douglas',
+          'DC': 'Douglas'
+        };
+
+        let searchQuery = aircraftType;
+
+        // Add manufacturer prefix if needed
+        const firstChar = aircraftType.charAt(0).toUpperCase();
+        if (aircraftManufacturers[firstChar] && aircraftType.length <= 4) {
+          searchQuery = `${aircraftManufacturers[firstChar]} ${aircraftType}`;
+        }
+
+        // Don't add airline to search - it's too specific and returns no results
+        // Just search for the aircraft type (e.g., "Embraer E295")
+
+        // Search Wikimedia Commons for aircraft photos
+        const wikimediaSearchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchQuery + ' aircraft')}&srnamespace=6&format=json&origin=*&srlimit=5`;
+
+        const searchResponse = await fetch(wikimediaSearchUrl);
+        if (searchResponse.ok) {
+          const searchData = await searchResponse.json();
+
+          if (searchData.query && searchData.query.search && searchData.query.search.length > 0) {
+            // Try to find a good photo from results
+            for (const result of searchData.query.search) {
+              const filename = result.title.replace('File:', '');
+
+              // Skip if not a photo format
+              if (!filename.match(/\.(jpg|jpeg|png)$/i)) continue;
+
+              // Get image URL
+              const imageInfoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(filename)}&prop=imageinfo&iiprop=url|user&iiurlwidth=800&format=json&origin=*`;
+
+              const imageResponse = await fetch(imageInfoUrl);
+              if (imageResponse.ok) {
+                const imageData = await imageResponse.json();
+                const pages = imageData.query.pages;
+                const pageId = Object.keys(pages)[0];
+
+                if (pages[pageId].imageinfo && pages[pageId].imageinfo[0]) {
+                  const imageInfo = pages[pageId].imageinfo[0];
+
+                  return {
+                    url: imageInfo.thumburl || imageInfo.url,
+                    photographer: imageInfo.user || 'Wikimedia Commons',
+                    link: `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(filename)}`,
+                    registration: null,
+                    aircraftType: aircraftType,
+                    aircraftIcao: null,
+                    isGenericPhoto: true // Flag to indicate this is not the actual aircraft
+                  };
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        // Wikimedia fallback failed silently
+      }
+    }
+
     return null;
   };
 
@@ -431,7 +504,7 @@ Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
           lastSeen: flight.arr_time ? new Date(flight.arr_time).getTime() / 1000 : null,
 
           // Aircraft information
-          icao24: flight.reg_number || flight.hex || 'N/A',
+          icao24: flight.reg_number || flight.hex || null,
           aircraftRegistration: flight.reg_number || null,
           aircraftIcao: flight.aircraft_icao || null,
           aircraftModel: flight.model || null,
@@ -454,18 +527,11 @@ Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
 
         // If AirLabs doesn't have aircraft data, try multiple fallbacks in order
         if (!flightInfo.aircraftRegistration && !flightInfo.aircraftModel) {
-          // Fallback 1: FlightAware AeroAPI (10,000 requests/month free)
+          // Fallback 1: FlightAware AeroAPI (10,000 requests/month free) via backend proxy
           const flightAwareKey = import.meta.env.VITE_FLIGHTAWARE_API_KEY;
           if (flightAwareKey && flightAwareKey !== API_DEFAULTS.PLACEHOLDER_FLIGHTAWARE) {
             try {
-              const faResponse = await fetch(
-                `https://aeroapi.flightaware.com/aeroapi/flights/${flightNumber.toUpperCase()}`,
-                {
-                  headers: {
-                    'x-apikey': flightAwareKey
-                  }
-                }
-              );
+              const faResponse = await fetch(`/api/flightaware/${flightNumber.toUpperCase()}`);
 
               if (faResponse.ok) {
                 const faData = await faResponse.json();
@@ -485,7 +551,7 @@ Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
             }
           }
 
-          // Fallback 2: OpenSky Network (free, unlimited but basic data)
+          // Fallback 2: OpenSky Network (free, unlimited but basic data) via backend proxy
           if (!flightInfo.aircraftRegistration) {
             const openSkyClientId = import.meta.env.VITE_OPENSKY_CLIENT_ID;
             const openSkySecret = import.meta.env.VITE_OPENSKY_CLIENT_SECRET;
@@ -494,14 +560,9 @@ Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
               try {
                 // OpenSky uses callsign, need to convert flight number to callsign
                 // Try searching by flight number pattern (e.g., SK4035 → SAS4035)
-                const osResponse = await fetch(
-                  `https://opensky-network.org/api/flights/all?begin=${Math.floor(Date.now() / 1000) - 86400}&end=${Math.floor(Date.now() / 1000)}`,
-                  {
-                    headers: {
-                      'Authorization': 'Basic ' + btoa(`${openSkyClientId}:${openSkySecret}`)
-                    }
-                  }
-                );
+                const begin = Math.floor(Date.now() / 1000) - 86400;
+                const end = Math.floor(Date.now() / 1000);
+                const osResponse = await fetch(`/api/opensky/flights?begin=${begin}&end=${end}`);
 
                 if (osResponse.ok) {
                   const osData = await osResponse.json();
@@ -584,7 +645,12 @@ Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
         setLoadingAircraftImage(true);
 
         // Fetch Planespotters first to get accurate aircraft model
-        fetchAircraftImage(flightInfo.aircraftRegistration, flightInfo.icao24)
+        fetchAircraftImage(
+          flightInfo.aircraftRegistration,
+          flightInfo.icao24,
+          flightInfo.airline,
+          flightInfo.aircraftModel || flightInfo.aircraftIcao
+        )
           .then(image => {
             setLoadingAircraftImage(false);
 
@@ -1167,6 +1233,13 @@ Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
                     alt={`${aircraftImage.registration || flightData?.aircraftRegistration || 'Aircraft'} - ${aircraftImage.aircraftType || flightData?.aircraftModel || 'Flight'} operated by ${flightData?.airline || 'airline'}`}
                     className="aircraft-image"
                   />
+                  {aircraftImage.isGenericPhoto && (
+                    <div className="aircraft-info-footer" style={{ marginTop: '8px', marginBottom: '4px' }}>
+                      <span className="aircraft-info-badge" style={{ backgroundColor: '#f59e0b' }}>
+                        ℹ️ Generic {aircraftImage.aircraftType} photo - registration data unavailable
+                      </span>
+                    </div>
+                  )}
                   <div className="aircraft-image-credit">
                     Photo by {aircraftImage.photographer} •
                     <a
@@ -1175,7 +1248,7 @@ Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
                       rel="noopener noreferrer"
                       className="aircraft-image-link"
                     >
-                      View on Planespotters.net
+                      {aircraftImage.isGenericPhoto ? 'View on Wikimedia Commons' : 'View on Planespotters.net'}
                     </a>
                   </div>
                 </div>
