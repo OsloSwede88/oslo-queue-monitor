@@ -49,7 +49,6 @@ function OsloQueue({ queueData, isConnected }) {
         alert('Notification permission dismissed. Please try again.');
       }
     } catch (error) {
-      console.error('Notification error:', error);
       alert('On iOS, notifications work best when:\n\n1. Add this site to your Home Screen\n2. Open it from the Home Screen icon\n3. Then enable notifications\n\nWould you like instructions?');
     }
   };

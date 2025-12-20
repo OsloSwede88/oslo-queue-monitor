@@ -2,128 +2,16 @@ import { useState, useEffect, useRef } from 'react';
 import './FlightTracker.css';
 import FlightTimeline from './flight/FlightTimeline';
 import FlightMap from './flight/FlightMap';
-
-// Quick Search Airlines Data - Currently active flights
-// Using AirlineLogo API for reliable logos
-const QUICK_AIRLINES = [
-  {
-    name: 'SAS',
-    code: 'SK',
-    logo: 'https://images.kiwi.com/airlines/64/SK.png',
-    flights: [
-      'SK10', 'SK1014', 'SK1285', 'SK1469', 'SK1584', 'SK159', 'SK1593', 'SK1621',
-      'SK166', 'SK1774', 'SK1804', 'SK1819', 'SK1854', 'SK2050', 'SK2267', 'SK2503',
-      'SK2509', 'SK2521', 'SK2588', 'SK2595', 'SK2616', 'SK2620', 'SK267', 'SK268',
-      'SK2813', 'SK2823', 'SK2898', 'SK2901', 'SK344', 'SK35', 'SK36', 'SK4025',
-      'SK4094', 'SK4417', 'SK4631', 'SK4673', 'SK4676', 'SK4695', 'SK4697', 'SK4714'
-    ]
-  },
-  {
-    name: 'Norwegian',
-    code: 'DY',
-    logo: 'https://images.kiwi.com/airlines/64/DY.png',
-    flights: [
-      'DY1157', 'DY1328', 'DY1698', 'DY1714', 'DY1729', 'DY1759', 'DY1765', 'DY1770',
-      'DY1788', 'DY1802', 'DY1816', 'DY1822', 'DY1824', 'DY1828', 'DY1836', 'DY1890',
-      'DY1908', 'DY1968', 'DY754', 'DY9066', 'DY9461'
-    ]
-  },
-  {
-    name: 'KLM',
-    code: 'KL',
-    logo: 'https://images.kiwi.com/airlines/64/KL.png',
-    flights: [
-      'KL1007', 'KL1042', 'KL1056', 'KL1176', 'KL1218', 'KL1220', 'KL1232', 'KL1257',
-      'KL1304', 'KL1333', 'KL1364', 'KL1466', 'KL1476', 'KL1502', 'KL1512', 'KL1572',
-      'KL1598', 'KL1602', 'KL1652', 'KL1678', 'KL1710', 'KL1777', 'KL1788', 'KL1801',
-      'KL1921', 'KL427', 'KL565', 'KL635', 'KL641', 'KL667', 'KL677', 'KL681',
-      'KL686', 'KL691', 'KL701', 'KL705', 'KL733', 'KL744', 'KL765', 'KL775'
-    ]
-  },
-  {
-    name: 'Ryanair',
-    code: 'FR',
-    logo: 'https://images.kiwi.com/airlines/64/FR.png',
-    flights: [
-      'FR1005', 'FR1026', 'FR1035', 'FR1086', 'FR1133', 'FR1134', 'FR1192', 'FR1252',
-      'FR1261', 'FR1275', 'FR1318', 'FR1320', 'FR1337', 'FR1347', 'FR1413', 'FR1424',
-      'FR1458', 'FR1534', 'FR1610', 'FR1621', 'FR1670', 'FR1695', 'FR1710', 'FR1750',
-      'FR1837', 'FR1920', 'FR1940', 'FR1946', 'FR195', 'FR1975', 'FR1989', 'FR203',
-      'FR2061', 'FR2098', 'FR2119', 'FR2142', 'FR2166', 'FR2252', 'FR2273', 'FR2277'
-    ]
-  },
-  {
-    name: 'Lufthansa',
-    code: 'LH',
-    logo: 'https://images.kiwi.com/airlines/64/LH.png',
-    flights: [
-      'LH1034', 'LH109', 'LH1095', 'LH1114', 'LH1127', 'LH1129', 'LH1141', 'LH1143',
-      'LH1149', 'LH1150', 'LH1158', 'LH1167', 'LH1177', 'LH1178', 'LH1281', 'LH1282',
-      'LH1292', 'LH1300', 'LH1312', 'LH1315', 'LH1323', 'LH1388', 'LH1419', 'LH1427',
-      'LH1454', 'LH149', 'LH1540', 'LH1605', 'LH1623', 'LH1631', 'LH1643', 'LH1669',
-      'LH1677', 'LH1703', 'LH1727', 'LH1735', 'LH1768', 'LH1823', 'LH184', 'LH186'
-    ]
-  },
-  {
-    name: 'British Airways',
-    code: 'BA',
-    logo: 'https://images.kiwi.com/airlines/64/BA.png',
-    flights: [
-      'BA104', 'BA108', 'BA117', 'BA118', 'BA1308', 'BA139', 'BA1421', 'BA143',
-      'BA1447', 'BA1448', 'BA1493', 'BA16', 'BA168', 'BA169', 'BA178', 'BA191',
-      'BA2167', 'BA217', 'BA219', 'BA2205', 'BA223', 'BA2287', 'BA238', 'BA243',
-      'BA249', 'BA2553', 'BA256', 'BA2625', 'BA2641', 'BA2661', 'BA2700', 'BA2718',
-      'BA272', 'BA273', 'BA2808', 'BA281', 'BA2811', 'BA283', 'BA285', 'BA288'
-    ]
-  },
-  {
-    name: 'Air France',
-    code: 'AF',
-    logo: 'https://images.kiwi.com/airlines/64/AF.png',
-    flights: [
-      'AF1025', 'AF1037', 'AF1046', 'AF1052', 'AF1070', 'AF1075', 'AF1105', 'AF1147',
-      'AF1162', 'AF1178', 'AF1184', 'AF1234', 'AF1248', 'AF1263', 'AF1276', 'AF1330',
-      'AF136', 'AF1383', 'AF1395', 'AF1417', 'AF1428', 'AF1458', 'AF1504', 'AF1524',
-      'AF1533', 'AF1546', 'AF1566', 'AF1596', 'AF1600', 'AF1624', 'AF1710', 'AF1726',
-      'AF1747', 'AF1780', 'AF182', 'AF183', 'AF1850', 'AF1889', 'AF194', 'AF196'
-    ]
-  },
-  {
-    name: 'Wizz Air',
-    code: 'W6',
-    logo: 'https://images.kiwi.com/airlines/64/W6.png',
-    flights: [
-      'W61049', 'W61094', 'W61335', 'W61352', 'W61405', 'W61593', 'W61752', 'W61841',
-      'W61973', 'W61989', 'W62033', 'W62045', 'W62283', 'W62301', 'W62448', 'W62486',
-      'W64021', 'W64352', 'W64409', 'W64440', 'W64520', 'W64552', 'W64566', 'W64599',
-      'W64617', 'W64705', 'W64736', 'W64763', 'W64785', 'W67829'
-    ]
-  },
-  {
-    name: 'easyJet',
-    code: 'U2',
-    logo: 'https://images.kiwi.com/airlines/64/U2.png',
-    flights: [
-      'U21004', 'U21019', 'U21023', 'U21025', 'U21027', 'U21041', 'U21120', 'U21267',
-      'U21311', 'U21364', 'U21394', 'U21409', 'U21453', 'U21469', 'U21541', 'U21552',
-      'U21571', 'U21599', 'U21701', 'U21746', 'U21806', 'U21914', 'U21921', 'U21923',
-      'U21965', 'U21979', 'U21983', 'U22006', 'U22020', 'U22030', 'U22105', 'U2215',
-      'U22185', 'U22187', 'U22191', 'U22250', 'U22274', 'U22276', 'U22284', 'U22294'
-    ]
-  },
-  {
-    name: 'Iberia',
-    code: 'IB',
-    logo: 'https://images.kiwi.com/airlines/64/IB.png',
-    flights: [
-      'IB107', 'IB108', 'IB114', 'IB1142', 'IB125', 'IB1328', 'IB1452', 'IB154',
-      'IB1545', 'IB1662', 'IB1802', 'IB211', 'IB2262', 'IB2290', 'IB2411', 'IB257',
-      'IB271', 'IB281', 'IB307', 'IB352', 'IB363', 'IB393', 'IB412', 'IB458',
-      'IB480', 'IB520', 'IB572', 'IB586', 'IB598', 'IB614', 'IB648', 'IB651',
-      'IB660', 'IB678', 'IB716', 'IB717', 'IB732', 'IB737', 'IB773', 'IB792'
-    ]
-  }
-];
+import {
+  SEARCH_HISTORY,
+  TIMING,
+  API_DEFAULTS,
+  STORAGE_KEYS,
+  AI_CONFIG,
+  DATE_FORMATS
+} from '../constants/config';
+import { QUICK_AIRLINES } from '../data/quickAirlines';
+import { icaoToIataMapping } from '../data/airlineCodeMappings';
 
 function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSavedFlightsUpdate }) {
   const [flightNumber, setFlightNumber] = useState('');
@@ -149,7 +37,7 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
 
   // Saved/Favorite flights state
   const [savedFlights, setSavedFlights] = useState(() => {
-    return JSON.parse(localStorage.getItem('savedFlights') || '[]');
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.SAVED_FLIGHTS) || '[]');
   });
 
   // Notify parent when saved flights change
@@ -175,7 +63,7 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
       // Remove from saved flights
       const newSaved = savedFlights.filter(f => f.flightNumber !== flightNumber);
       setSavedFlights(newSaved);
-      localStorage.setItem('savedFlights', JSON.stringify(newSaved));
+      localStorage.setItem(STORAGE_KEYS.SAVED_FLIGHTS, JSON.stringify(newSaved));
     } else {
       // Add to saved flights
       const savedFlight = {
@@ -186,7 +74,7 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
       };
       const newSaved = [savedFlight, ...savedFlights];
       setSavedFlights(newSaved);
-      localStorage.setItem('savedFlights', JSON.stringify(newSaved));
+      localStorage.setItem(STORAGE_KEYS.SAVED_FLIGHTS, JSON.stringify(newSaved));
     }
   };
 
@@ -201,18 +89,18 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
     };
 
     // Get existing history
-    const existingHistory = JSON.parse(localStorage.getItem('flightSearchHistory') || '[]');
+    const existingHistory = JSON.parse(localStorage.getItem(STORAGE_KEYS.SEARCH_HISTORY) || '[]');
 
     // Remove duplicates (same flight number searched recently)
     const filteredHistory = existingHistory.filter(
       item => item.flightNumber !== historyItem.flightNumber
     );
 
-    // Add new search to beginning, keep max 15 items
-    const newHistory = [historyItem, ...filteredHistory].slice(0, 15);
+    // Add new search to beginning, keep max items
+    const newHistory = [historyItem, ...filteredHistory].slice(0, SEARCH_HISTORY.MAX_ITEMS);
 
     // Save to localStorage
-    localStorage.setItem('flightSearchHistory', JSON.stringify(newHistory));
+    localStorage.setItem(STORAGE_KEYS.SEARCH_HISTORY, JSON.stringify(newHistory));
 
     // Notify parent component if callback provided
     if (onSearchHistoryUpdate) {
@@ -221,22 +109,17 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
   };
 
   const fetchWeatherData = async (icaoCode) => {
-    console.log('[fetchWeatherData] Called with ICAO:', icaoCode);
     if (!icaoCode) {
-      console.log('[fetchWeatherData] No ICAO code provided, returning null');
       return null;
     }
 
     const apiKey = import.meta.env.VITE_CHECKWX_API_KEY;
-    console.log('[fetchWeatherData] API key configured:', apiKey ? 'Yes' : 'No');
-    if (!apiKey || apiKey === 'your_checkwx_api_key_here') {
-      console.warn('[fetchWeatherData] CheckWX API key not configured. Weather data will not be available.');
+    if (!apiKey || apiKey === API_DEFAULTS.PLACEHOLDER_CHECKWX) {
       return null;
     }
 
     try {
       const url = `https://api.checkwx.com/metar/${icaoCode}/decoded`;
-      console.log('[fetchWeatherData] Fetching from:', url);
       // Use CheckWX API for METAR data (free, 3000 requests/day)
       const response = await fetch(url, {
         headers: {
@@ -244,14 +127,12 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
         }
       });
 
-      console.log('[fetchWeatherData] Response status:', response.status);
       if (response.ok) {
         const data = await response.json();
-        console.log('[fetchWeatherData] Response data:', data);
         return data.data?.[0] || null;
       }
     } catch (err) {
-      console.error('[fetchWeatherData] Error:', err);
+      // Error fetching weather data
     }
     return null;
   };
@@ -298,12 +179,11 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
               .map(word => word.charAt(0).toUpperCase() + word.slice(1))
               .join(' ');
 
-            console.log('[fetchAircraftImage] Parsed from URL:', { registration: reg, model: aircraftModel });
             return { registration: reg, aircraftType: aircraftModel };
           }
         }
       } catch (err) {
-        console.error('[fetchAircraftImage] Error parsing URL:', err);
+        // Error parsing URL
       }
       return { registration: null, aircraftType: null };
     };
@@ -318,7 +198,6 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
         });
         if (response.ok) {
           const data = await response.json();
-          console.log('[fetchAircraftImage] Planespotters data:', data);
           if (data.photos && data.photos.length > 0) {
             const photo = data.photos[0];
             const parsed = parseAircraftFromUrl(photo.link);
@@ -344,7 +223,6 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
         });
         if (response.ok) {
           const data = await response.json();
-          console.log('[fetchAircraftImage] Planespotters data:', data);
           if (data.photos && data.photos.length > 0) {
             const photo = data.photos[0];
             const parsed = parseAircraftFromUrl(photo.link);
@@ -361,19 +239,15 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
         }
       }
     } catch (err) {
-      console.error('Aircraft image fetch error:', err);
+      // Error fetching aircraft image
     }
     return null;
   };
 
   const generateAircraftInfo = async (aircraftModel, registration, airline) => {
-    console.log('[generateAircraftInfo] Called with:', { aircraftModel, registration, airline });
-
     const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-    console.log('[generateAircraftInfo] API key configured:', apiKey ? 'Yes' : 'No');
 
-    if (!apiKey || apiKey === 'your_openrouter_api_key_here') {
-      console.warn('[generateAircraftInfo] OpenRouter API key not configured. Aircraft info will not be available.');
+    if (!apiKey || apiKey === API_DEFAULTS.PLACEHOLDER_OPENROUTER) {
       return null;
     }
 
@@ -385,10 +259,7 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
 4. Interesting facts or notable features
 5. Common routes or operators
 
-Keep it concise but informative, around 150-200 words.`;
-
-      console.log('[generateAircraftInfo] Prompt:', prompt);
-      console.log('[generateAircraftInfo] Making API call to OpenRouter...');
+Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
 
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -399,7 +270,7 @@ Keep it concise but informative, around 150-200 words.`;
           'X-Title': 'Oslo Airport Queue Monitor'
         },
         body: JSON.stringify({
-          model: 'openai/gpt-5-nano',
+          model: AI_CONFIG.MODEL,
           messages: [
             {
               role: 'user',
@@ -409,26 +280,18 @@ Keep it concise but informative, around 150-200 words.`;
         })
       });
 
-      console.log('[generateAircraftInfo] Response status:', response.status);
-
       if (response.ok) {
         const data = await response.json();
-        console.log('[generateAircraftInfo] Response data:', data);
         const content = data.choices[0].message.content;
-        console.log('[generateAircraftInfo] Returning content length:', content ? content.length : 0);
         return content;
       } else if (response.status === 429) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('[generateAircraftInfo] Rate limit error (429):', errorData);
-        console.warn('[generateAircraftInfo] OpenRouter rate limited. Try again in a few seconds.');
         return null;
       } else {
         const errorText = await response.text();
-        console.error('[generateAircraftInfo] API error response:', errorText);
         return null;
       }
     } catch (err) {
-      console.error('[generateAircraftInfo] Exception caught:', err);
       return null;
     }
   };
@@ -524,7 +387,7 @@ Keep it concise but informative, around 150-200 words.`;
       const apiKey = import.meta.env.VITE_AIRLABS_API_KEY;
 
       // Check if API key is configured
-      if (!apiKey || apiKey === 'your_airlabs_api_key_here') {
+      if (!apiKey || apiKey === API_DEFAULTS.PLACEHOLDER_AIRLABS) {
         setError('Flight tracking requires an AirLabs API key. Get a free key at airlabs.co (1000 requests/month) and add it to your .env file as VITE_AIRLABS_API_KEY.');
         setLoading(false);
         return;
@@ -540,14 +403,10 @@ Keep it concise but informative, around 150-200 words.`;
       }
 
       const data = await response.json();
-      console.log('AirLabs response:', data);
 
       // Check if response exists and has flight data (response is an object, not array)
       if (data.response && data.response.flight_iata) {
         const flight = data.response;
-
-        // Log aircraft data to debug
-        console.log('Aircraft data:', flight);
 
         // Convert AirLabs format to our format
         const flightInfo = {
@@ -595,10 +454,9 @@ Keep it concise but informative, around 150-200 words.`;
 
         // If AirLabs doesn't have aircraft data, try AviationStack as fallback
         if (!flightInfo.aircraftRegistration && !flightInfo.aircraftModel) {
-          console.log('[FlightTracker] No aircraft data from AirLabs, trying AviationStack fallback...');
           const aviationStackKey = import.meta.env.VITE_AVIATIONSTACK_API_KEY;
 
-          if (aviationStackKey && aviationStackKey !== 'your_aviationstack_api_key_here') {
+          if (aviationStackKey && aviationStackKey !== API_DEFAULTS.PLACEHOLDER_AVIATIONSTACK) {
             try {
               const asResponse = await fetch(
                 `https://api.aviationstack.com/v1/flights?access_key=${aviationStackKey}&flight_iata=${flightNumber.toUpperCase()}`
@@ -606,11 +464,9 @@ Keep it concise but informative, around 150-200 words.`;
 
               if (asResponse.ok) {
                 const asData = await asResponse.json();
-                console.log('[FlightTracker] AviationStack response:', asData);
 
                 if (asData.data && asData.data.length > 0) {
                   const asFlight = asData.data[0];
-                  console.log('[FlightTracker] AviationStack aircraft object:', asFlight.aircraft);
 
                   // Update flightInfo with AviationStack aircraft data
                   if (asFlight.aircraft) {
@@ -630,21 +486,14 @@ Keep it concise but informative, around 150-200 words.`;
                     if (asFlight.aircraft.icao) {
                       flightInfo.aircraftIcao = asFlight.aircraft.icao;
                     }
-
-                    console.log('[FlightTracker] Updated aircraft data from AviationStack:', {
-                      icao24: flightInfo.icao24,
-                      registration: flightInfo.aircraftRegistration,
-                      icao: flightInfo.aircraftIcao,
-                      model: flightInfo.aircraftModel
-                    });
                   }
                 }
               }
             } catch (err) {
-              console.log('[FlightTracker] AviationStack fallback failed:', err.message);
+              // AviationStack fallback failed
             }
           } else {
-            console.log('[FlightTracker] AviationStack API key not configured, skipping fallback');
+            // AviationStack API key not configured
           }
         }
 
@@ -656,19 +505,10 @@ Keep it concise but informative, around 150-200 words.`;
         // Fetch weather data (convert IATA to ICAO codes)
         const depIcao = iataToIcao(flightInfo.estDepartureAirport);
         const arrIcao = iataToIcao(flightInfo.estArrivalAirport);
-        console.log('[FlightTracker] Fetching weather data for:', {
-          departure: `${flightInfo.estDepartureAirport} (${depIcao})`,
-          arrival: `${flightInfo.estArrivalAirport} (${arrIcao})`
-        });
         const [departureWeather, arrivalWeather] = await Promise.all([
           fetchWeatherData(depIcao),
           fetchWeatherData(arrIcao)
         ]);
-
-        console.log('[FlightTracker] Weather data received:', {
-          departure: departureWeather,
-          arrival: arrivalWeather
-        });
 
         setWeatherData({
           departure: departureWeather,
@@ -676,18 +516,12 @@ Keep it concise but informative, around 150-200 words.`;
         });
 
         // Fetch aircraft details in background
-        console.log('[FlightTracker] Fetching aircraft details...');
-        console.log('[FlightTracker] Registration:', flightInfo.aircraftRegistration);
-        console.log('[FlightTracker] ICAO24:', flightInfo.icao24);
-        console.log('[FlightTracker] Model:', flightInfo.aircraftModel);
-
         setLoadingAircraftInfo(true);
         setLoadingAircraftImage(true);
 
         // Fetch Planespotters first to get accurate aircraft model
         fetchAircraftImage(flightInfo.aircraftRegistration, flightInfo.icao24)
           .then(image => {
-            console.log('[FlightTracker] Aircraft image result:', image);
             setLoadingAircraftImage(false);
 
             // Update display immediately with Planespotters data
@@ -702,18 +536,12 @@ Keep it concise but informative, around 150-200 words.`;
                   aircraftModel: image.aircraftType || prevData.aircraftModel,
                   aircraftIcao: image.aircraftIcao || prevData.aircraftIcao
                 }));
-                console.log('[FlightTracker] Updated flight data with Planespotters info:', {
-                  registration: image.registration,
-                  model: image.aircraftType,
-                  icao: image.aircraftIcao
-                });
               }
 
               // Now generate AI info with the actual aircraft model from Planespotters
               const aircraftModel = image.aircraftType || flightInfo.aircraftModel;
               const registration = image.registration || flightInfo.aircraftRegistration;
 
-              console.log('[FlightTracker] Calling AI with aircraft model:', aircraftModel);
               return generateAircraftInfo(aircraftModel, registration, flightInfo.airline);
             } else {
               // No image found, still try AI with whatever data we have
@@ -721,12 +549,10 @@ Keep it concise but informative, around 150-200 words.`;
             }
           })
           .then(info => {
-            console.log('[FlightTracker] Aircraft info result:', info);
             setAircraftInfo(info);
             setLoadingAircraftInfo(false);
           })
           .catch(err => {
-            console.error('[FlightTracker] Error fetching aircraft details:', err);
             setLoadingAircraftInfo(false);
             setLoadingAircraftImage(false);
           });
@@ -734,7 +560,6 @@ Keep it concise but informative, around 150-200 words.`;
         setError(`No flight found for ${flightNumber}. Try flight numbers like LH400, BA117, SK4035, DY1302.`);
       }
     } catch (err) {
-      console.error('Flight search error:', err);
       setError(`Unable to fetch flight data: ${err.message}. Please check your API key or try again later.`);
     } finally {
       setLoading(false);
@@ -766,19 +591,13 @@ Keep it concise but informative, around 150-200 words.`;
 
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return 'N/A';
-    return new Date(timestamp * 1000).toLocaleString('no-NO');
+    return new Date(timestamp * 1000).toLocaleString(DATE_FORMATS.LOCALE);
   };
 
   const formatTime = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleString('no-NO', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return date.toLocaleString(DATE_FORMATS.LOCALE, DATE_FORMATS.DATETIME_OPTIONS);
   };
 
   const getStatusColor = (status) => {
@@ -793,166 +612,12 @@ Keep it concise but informative, around 150-200 words.`;
 
   // Note: Flight subscription feature removed (backend deprecated)
 
-  // ICAO to IATA airline code mapping (comprehensive)
-  const icaoToIataMapping = {
-    // === SCANDINAVIA & NORDICS ===
-    'NOZ': 'DY',   // Norwegian Air Shuttle
-    'NAX': 'DY',   // Norwegian Air International
-    'SAS': 'SK',   // SAS Scandinavian Airlines
-    'WIF': 'WF',   // Widerøe
-    'FIN': 'AY',   // Finnair
-    'DTR': 'RC',   // DAT Danish Air Transport (using DTR to avoid conflict)
-    'ICE': 'FI',   // Icelandair
-    'BCS': 'OV',   // Bluebird Nordic (BRA Braathens Regional)
-    'TFL': 'PY',   // Transavia France
-
-    // === WESTERN EUROPE ===
-    'DLH': 'LH',   // Lufthansa
-    'BAW': 'BA',   // British Airways
-    'AFR': 'AF',   // Air France
-    'KLM': 'KL',   // KLM Royal Dutch Airlines
-    'RYR': 'FR',   // Ryanair
-    'EZY': 'U2',   // easyJet
-    'IBE': 'IB',   // Iberia
-    'TAP': 'TP',   // TAP Air Portugal
-    'SWR': 'LX',   // Swiss International Air Lines
-    'AUA': 'OS',   // Austrian Airlines
-    'BEL': 'SN',   // Brussels Airlines
-    'EWG': 'EW',   // Eurowings
-    'GWI': 'ST',   // Germania
-    'TUI': 'X3',   // TUI Airways
-    'EIN': 'EI',   // Aer Lingus
-    'RUK': 'RK',   // Ryanair UK
-    'VLG': 'VY',   // Vueling Airlines
-    'AEE': 'A3',   // Aegean Airlines
-    'THY': 'TK',   // Turkish Airlines
-
-    // === EASTERN EUROPE ===
-    'LOT': 'LO',   // LOT Polish Airlines
-    'CSA': 'OK',   // Czech Airlines
-    'WZZ': 'W6',   // Wizz Air
-    'TRA': 'HV',   // Transavia
-    'ROT': 'RO',   // TAROM
-    'BUL': 'FB',   // Bulgaria Air
-    'UKR': 'PS',   // Ukraine International Airlines
-    'BMS': 'ZB',   // Air Albania
-    'AWC': '8A',   // Atlas Global
-
-    // === UK & IRELAND ===
-    'VIR': 'VS',   // Virgin Atlantic
-    'LOG': 'LS',   // Loganair
-    'EXS': 'LS',   // Jet2.com
-    'TOM': 'BY',   // TUI Airways
-    'BMR': 'BM',   // flybmi
-
-    // === NORTH AMERICA ===
-    'AAL': 'AA',   // American Airlines
-    'DAL': 'DL',   // Delta Air Lines
-    'UAL': 'UA',   // United Airlines
-    'SWA': 'WN',   // Southwest Airlines
-    'JBU': 'B6',   // JetBlue Airways
-    'ASA': 'AS',   // Alaska Airlines
-    'FFT': 'F9',   // Frontier Airlines
-    'NKS': 'NK',   // Spirit Airlines
-    'ACA': 'AC',   // Air Canada
-    'WJA': 'WS',   // WestJet
-    'SKW': 'OO',   // SkyWest Airlines
-    'ENY': 'MQ',   // Envoy Air
-    'RPA': 'YX',   // Republic Airways
-    'GOJ': 'G4',   // Allegiant Air
-    'SCX': 'SY',   // Sun Country Airlines
-
-    // === MIDDLE EAST ===
-    'UAE': 'EK',   // Emirates
-    'QTR': 'QR',   // Qatar Airways
-    'ETD': 'EY',   // Etihad Airways
-    'FDB': 'FZ',   // flydubai
-    'GFA': 'GF',   // Gulf Air
-    'KAC': 'KU',   // Kuwait Airways
-    'RJA': 'RJ',   // Royal Jordanian
-    'MEA': 'ME',   // Middle East Airlines
-    'MSR': 'MS',   // EgyptAir
-    'SVA': 'SV',   // Saudi Arabian Airlines
-    'WIA': 'IY',   // Yemenia
-    'OMA': 'WY',   // Oman Air
-
-    // === ASIA-PACIFIC ===
-    'SIA': 'SQ',   // Singapore Airlines
-    'CPA': 'CX',   // Cathay Pacific
-    'THA': 'TG',   // Thai Airways
-    'MAS': 'MH',   // Malaysia Airlines
-    'AXM': 'D7',   // AirAsia X
-    'VJC': 'VJ',   // VietJet Air
-    'HVN': 'VN',   // Vietnam Airlines
-    'CEB': '5J',   // Cebu Pacific
-    'PAL': 'PR',   // Philippine Airlines
-    'GIA': 'GA',   // Garuda Indonesia
-    'JAL': 'JL',   // Japan Airlines
-    'ANA': 'NH',   // All Nippon Airways
-    'KAL': 'KE',   // Korean Air
-    'AAR': 'OZ',   // Asiana Airlines
-    'CSN': 'CZ',   // China Southern Airlines
-    'CES': 'MU',   // China Eastern Airlines
-    'CCA': 'CA',   // Air China
-    'CHH': 'HU',   // Hainan Airlines
-    'CSC': '3U',   // Sichuan Airlines
-    'AIJ': 'AI',   // Air India
-    'IGO': '6E',   // IndiGo
-    'VTI': 'IT',   // Tigerair Taiwan
-
-    // === AUSTRALIA & OCEANIA ===
-    'QFA': 'QF',   // Qantas
-    'VOZ': 'VA',   // Virgin Australia
-    'JST': 'JQ',   // Jetstar Airways
-    'ANZ': 'NZ',   // Air New Zealand
-    'FJI': 'FJ',   // Fiji Airways
-
-    // === AFRICA ===
-    'SAA': 'SA',   // South African Airways
-    'ETH': 'ET',   // Ethiopian Airlines
-    'KQA': 'KQ',   // Kenya Airways
-    'RAM': 'AT',   // Royal Air Maroc
-    'AEW': 'RW',   // RwandAir
-    'DAH': 'AH',   // Air Algérie
-    'TUN': 'TU',   // Tunisair
-    'LBT': 'TN',   // Nouvelair
-
-    // === SOUTH AMERICA ===
-    'GLO': 'G3',   // GOL Linhas Aéreas
-    'TAM': 'JJ',   // LATAM Brasil
-    'AZU': 'AD',   // Azul Brazilian Airlines
-    'LAN': 'LA',   // LATAM Airlines
-    'ARG': 'AR',   // Aerolíneas Argentinas
-    'AVA': 'AV',   // Avianca
-    'CMP': 'CM',   // Copa Airlines
-
-    // === CARGO AIRLINES ===
-    'FDX': 'FX',   // FedEx Express
-    'UPS': '5X',   // UPS Airlines
-    'GEC': 'ER',   // DHL Aviation
-    'DHK': 'D0',   // DHL Air
-    'CLX': 'CL',   // Cargolux
-
-    // === REGIONAL & OTHER ===
-    'BEE': 'BE',   // Flybe
-    'WOW': 'WW',   // WOW air
-    'MPH': 'MP',   // Martinair
-    'GTI': 'HO',   // Juneyao Airlines
-    'CUA': 'CU',   // Cubana
-    'CND': 'CO',   // Corendon Airlines
-    'AMC': 'AN',   // Air Niugini
-    'MPD': 'OM',   // MIAT Mongolian Airlines
-  };
-
   // Handler for when a flight is selected from the map
   const handleFlightSelectFromMap = (fr24Flight) => {
-    console.log('[handleFlightSelectFromMap] Selected flight from map:', fr24Flight);
-
     // Extract callsign from OpenSky data
     const callsign = (fr24Flight.flight || fr24Flight.callsign || '').trim();
 
     if (!callsign) {
-      console.log('[handleFlightSelectFromMap] No callsign found');
       return;
     }
 
@@ -969,23 +634,20 @@ Keep it concise but informative, around 150-200 words.`;
       if (iataCode) {
         // Use IATA code format (what most flight APIs expect)
         const formattedFlight = `${iataCode}${flightNum}`;
-        console.log(`[handleFlightSelectFromMap] Converted ${callsign} → ${formattedFlight}`);
         setFlightNumber(formattedFlight);
       } else {
         // Unknown airline, try as-is
-        console.log(`[handleFlightSelectFromMap] Unknown airline code ${airlineCode}, trying as-is: ${callsign}`);
         setFlightNumber(callsign);
       }
     } else {
       // Couldn't parse, use as-is
-      console.log(`[handleFlightSelectFromMap] Could not parse callsign format, trying as-is: ${callsign}`);
       setFlightNumber(callsign);
     }
 
     // Trigger search with the selected flight
     setTimeout(() => {
       searchFlight();
-    }, 100);
+    }, TIMING.AUTO_SEARCH_DELAY);
   };
 
   // Quick Search handlers
@@ -1438,7 +1100,7 @@ Keep it concise but informative, around 150-200 words.`;
                 <div className="aircraft-image-container">
                   <img
                     src={aircraftImage.url}
-                    alt="Aircraft"
+                    alt={`${aircraftImage.registration || flightData?.aircraftRegistration || 'Aircraft'} - ${aircraftImage.aircraftType || flightData?.aircraftModel || 'Flight'} operated by ${flightData?.airline || 'airline'}`}
                     className="aircraft-image"
                   />
                   <div className="aircraft-image-credit">

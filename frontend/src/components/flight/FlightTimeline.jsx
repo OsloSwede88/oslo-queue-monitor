@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import './FlightTimeline.css';
+import { TIMELINE, DATE_FORMATS } from '../../constants/config';
 
 function FlightTimeline({ flightData }) {
   // Calculate flight progress and stage
@@ -31,8 +32,8 @@ function FlightTimeline({ flightData }) {
 
     // Determine stage based on progress
     let stage;
-    if (progress < 5) stage = 'boarding';
-    else if (progress < 95) stage = 'enRoute';
+    if (progress < TIMELINE.BOARDING_THRESHOLD) stage = 'boarding';
+    else if (progress < TIMELINE.ARRIVING_THRESHOLD) stage = 'enRoute';
     else stage = 'arriving';
 
     return { stage, progress };
@@ -49,7 +50,7 @@ function FlightTimeline({ flightData }) {
     };
 
     if (progress >= nodeProgress[nodeName]) return 'completed';
-    if (Math.abs(progress - nodeProgress[nodeName]) < 10) return 'active';
+    if (Math.abs(progress - nodeProgress[nodeName]) < TIMELINE.NODE_ACTIVE_RANGE) return 'active';
     return 'upcoming';
   };
 
@@ -57,10 +58,7 @@ function FlightTimeline({ flightData }) {
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
     const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return date.toLocaleTimeString(DATE_FORMATS.LOCALE_EN, DATE_FORMATS.TIME_OPTIONS);
   };
 
   // Format ETA

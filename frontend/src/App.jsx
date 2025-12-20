@@ -3,25 +3,26 @@ import './App.css';
 import Layout from './components/layout/Layout';
 import FlightTracker from './components/FlightTracker';
 import Settings from './components/Settings';
+import { STORAGE_KEYS, THEMES } from './constants/config';
 
 function App() {
   const [currentView, setCurrentView] = useState('flights');
   const [theme, setTheme] = useState(() => {
-    // Get theme from localStorage or default to 'dark'
-    return localStorage.getItem('theme') || 'dark';
+    // Get theme from localStorage or default to dark
+    return localStorage.getItem(STORAGE_KEYS.THEME) || THEMES.DEFAULT;
   });
   const [searchHistory, setSearchHistory] = useState(() => {
     // Load search history from localStorage
-    return JSON.parse(localStorage.getItem('flightSearchHistory') || '[]');
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.SEARCH_HISTORY) || '[]');
   });
   const [searchFromHistoryTrigger, setSearchFromHistoryTrigger] = useState(null);
   const [savedFlights, setSavedFlights] = useState(() => {
     // Load saved flights from localStorage
-    return JSON.parse(localStorage.getItem('savedFlights') || '[]');
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.SAVED_FLIGHTS) || '[]');
   });
   const [settings, setSettings] = useState(() => {
     // Load settings from localStorage or use defaults
-    const saved = localStorage.getItem('appSettings');
+    const saved = localStorage.getItem(STORAGE_KEYS.APP_SETTINGS);
     return saved ? JSON.parse(saved) : {
       units: 'metric',
       temperatureUnit: 'celsius',
@@ -32,11 +33,11 @@ function App() {
   // Apply theme to document
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    localStorage.setItem(STORAGE_KEYS.THEME, theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'dark' ? 'light' : 'dark');
+    setTheme(prevTheme => prevTheme === THEMES.DARK ? THEMES.LIGHT : THEMES.DARK);
   };
 
   const handleSearchHistoryUpdate = (newHistory) => {
@@ -58,19 +59,19 @@ function App() {
   };
 
   const clearSearchHistory = () => {
-    localStorage.removeItem('flightSearchHistory');
+    localStorage.removeItem(STORAGE_KEYS.SEARCH_HISTORY);
     setSearchHistory([]);
   };
 
   const removeSavedFlight = (flightNumber) => {
     const newSaved = savedFlights.filter(f => f.flightNumber !== flightNumber);
     setSavedFlights(newSaved);
-    localStorage.setItem('savedFlights', JSON.stringify(newSaved));
+    localStorage.setItem(STORAGE_KEYS.SAVED_FLIGHTS, JSON.stringify(newSaved));
   };
 
   const handleSettingsChange = (newSettings) => {
     setSettings(newSettings);
-    localStorage.setItem('appSettings', JSON.stringify(newSettings));
+    localStorage.setItem(STORAGE_KEYS.APP_SETTINGS, JSON.stringify(newSettings));
   };
 
   return (
