@@ -922,9 +922,9 @@ Keep it concise but informative, around 150-200 words.`;
           <p>Track any flight in real-time</p>
         </div>
 
-        <div className="flight-search glass glass-card">
+        <div className="flight-search glass glass-card" ref={quickSearchRef}>
           <div className="search-inputs">
-            <div className="flight-input-wrapper" ref={quickSearchRef}>
+            <div className="flight-input-wrapper">
               <input
                 type="text"
                 className="flight-input"
@@ -941,37 +941,6 @@ Keep it concise but informative, around 150-200 words.`;
               >
                 ▼
               </button>
-
-              {/* Quick Search Dropdown */}
-              {quickSearchOpen && (
-                <div className="quick-search-dropdown glass">
-                  {QUICK_AIRLINES.map((airline) => (
-                    <div key={airline.code} className="quick-airline">
-                      <button
-                        className={`quick-airline-btn ${selectedAirline === airline.code ? 'active' : ''}`}
-                        onClick={() => selectAirline(airline.code)}
-                      >
-                        <span>{airline.icon}</span>
-                        <span>{airline.name}</span>
-                        <span className="expand-arrow">{selectedAirline === airline.code ? '▲' : '▼'}</span>
-                      </button>
-                      {selectedAirline === airline.code && (
-                        <div className="quick-flights">
-                          {airline.flights.map((flight) => (
-                            <button
-                              key={flight}
-                              className="quick-flight-btn"
-                              onClick={() => selectFlight(flight)}
-                            >
-                              {flight}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
             <input
               type="date"
@@ -982,6 +951,38 @@ Keep it concise but informative, around 150-200 words.`;
               lang="en-US"
             />
           </div>
+
+          {/* Quick Search Dropdown - Positioned below search inputs */}
+          {quickSearchOpen && (
+            <div className="quick-search-dropdown glass">
+              {QUICK_AIRLINES.map((airline) => (
+                <div key={airline.code} className="quick-airline">
+                  <button
+                    className={`quick-airline-btn ${selectedAirline === airline.code ? 'active' : ''}`}
+                    onClick={() => selectAirline(airline.code)}
+                  >
+                    <span>{airline.icon}</span>
+                    <span>{airline.name}</span>
+                    <span className="expand-arrow">{selectedAirline === airline.code ? '▲' : '▼'}</span>
+                  </button>
+                  {selectedAirline === airline.code && (
+                    <div className="quick-flights">
+                      {airline.flights.map((flight) => (
+                        <button
+                          key={flight}
+                          className="quick-flight-btn"
+                          onClick={() => selectFlight(flight)}
+                        >
+                          {flight}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           <button
             className="btn btn-primary search-btn"
             onClick={searchFlight}
