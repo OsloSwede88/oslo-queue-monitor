@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import Layout from './components/layout/Layout';
 import FlightTracker from './components/FlightTracker';
+import Settings from './components/Settings';
 
 function App() {
   const [currentView, setCurrentView] = useState('flights');
@@ -14,6 +15,20 @@ function App() {
     return JSON.parse(localStorage.getItem('flightSearchHistory') || '[]');
   });
   const [searchFromHistoryTrigger, setSearchFromHistoryTrigger] = useState(null);
+  const [savedFlights, setSavedFlights] = useState(() => {
+    // Load saved flights from localStorage
+    return JSON.parse(localStorage.getItem('savedFlights') || '[]');
+  });
+  const [settings, setSettings] = useState(() => {
+    // Load settings from localStorage or use defaults
+    const saved = localStorage.getItem('appSettings');
+    return saved ? JSON.parse(saved) : {
+      units: 'metric',
+      temperatureUnit: 'celsius',
+      autoRefresh: false,
+      mapZoom: 8
+    };
+  });
 
   // Apply theme to document
   useEffect(() => {
@@ -29,14 +44,34 @@ function App() {
     setSearchHistory(newHistory);
   };
 
+  const handleSavedFlightsUpdate = (newSaved) => {
+    setSavedFlights(newSaved);
+  };
+
   const handleSearchFromHistory = (historyItem) => {
     setSearchFromHistoryTrigger(historyItem);
+    setCurrentView('flights'); // Switch to flights view
+  };
+
+  const handleSearchFromSaved = (savedItem) => {
+    setSearchFromHistoryTrigger(savedItem);
     setCurrentView('flights'); // Switch to flights view
   };
 
   const clearSearchHistory = () => {
     localStorage.removeItem('flightSearchHistory');
     setSearchHistory([]);
+  };
+
+  const removeSavedFlight = (flightNumber) => {
+    const newSaved = savedFlights.filter(f => f.flightNumber !== flightNumber);
+    setSavedFlights(newSaved);
+    localStorage.setItem('savedFlights', JSON.stringify(newSaved));
+  };
+
+  const handleSettingsChange = (newSettings) => {
+    setSettings(newSettings);
+    localStorage.setItem('appSettings', JSON.stringify(newSettings));
   };
 
   return (
@@ -49,11 +84,25 @@ function App() {
         searchHistory={searchHistory}
         onSearchFromHistory={handleSearchFromHistory}
         onClearHistory={clearSearchHistory}
+        savedFlights={savedFlights}
+        onSearchFromSaved={handleSearchFromSaved}
+        onRemoveSaved={removeSavedFlight}
       >
-        <FlightTracker
-          onSearchHistoryUpdate={handleSearchHistoryUpdate}
-          searchFromHistoryTrigger={searchFromHistoryTrigger}
-        />
+        {currentView === 'flights' && (
+          <FlightTracker
+            onSearchHistoryUpdate={handleSearchHistoryUpdate}
+            onSavedFlightsUpdate={handleSavedFlightsUpdate}
+            searchFromHistoryTrigger={searchFromHistoryTrigger}
+            settings={settings}
+          />
+        )}
+
+        {currentView === 'settings' && (
+          <Settings
+            settings={settings}
+            onSettingsChange={handleSettingsChange}
+          />
+        )}
 
         <footer className="footer">
           <p className="disclaimer text-tertiary">

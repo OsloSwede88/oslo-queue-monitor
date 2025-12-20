@@ -3,7 +3,7 @@ import './FlightTracker.css';
 import FlightTimeline from './flight/FlightTimeline';
 import FlightMap from './flight/FlightMap';
 
-function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger }) {
+function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSavedFlightsUpdate }) {
   const [flightNumber, setFlightNumber] = useState('');
   const [flightDate, setFlightDate] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,6 +19,49 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger }) {
 
   // Track if we should auto-search from history
   const shouldAutoSearch = useRef(false);
+
+  // Saved/Favorite flights state
+  const [savedFlights, setSavedFlights] = useState(() => {
+    return JSON.parse(localStorage.getItem('savedFlights') || '[]');
+  });
+
+  // Notify parent when saved flights change
+  useEffect(() => {
+    if (onSavedFlightsUpdate) {
+      onSavedFlightsUpdate(savedFlights);
+    }
+  }, [savedFlights, onSavedFlightsUpdate]);
+
+  // Check if current flight is saved
+  const isFlightSaved = (flightNumber) => {
+    return savedFlights.some(f => f.flightNumber === flightNumber);
+  };
+
+  // Toggle save/unsave flight
+  const toggleSaveFlight = () => {
+    if (!flightData) return;
+
+    const flightNumber = flightData.callsign;
+    const isSaved = isFlightSaved(flightNumber);
+
+    if (isSaved) {
+      // Remove from saved flights
+      const newSaved = savedFlights.filter(f => f.flightNumber !== flightNumber);
+      setSavedFlights(newSaved);
+      localStorage.setItem('savedFlights', JSON.stringify(newSaved));
+    } else {
+      // Add to saved flights
+      const savedFlight = {
+        flightNumber: flightData.callsign,
+        airline: flightData.airline,
+        route: `${flightData.estDepartureAirport} → ${flightData.estArrivalAirport}`,
+        savedAt: new Date().toISOString()
+      };
+      const newSaved = [savedFlight, ...savedFlights];
+      setSavedFlights(newSaved);
+      localStorage.setItem('savedFlights', JSON.stringify(newSaved));
+    }
+  };
 
   // Save search to history
   const saveToSearchHistory = (flightInfo) => {
@@ -884,13 +927,23 @@ Keep it concise but informative, around 150-200 words.`;
                   <p className="airline-name">{flightData.airline} {flightData.airlineIata && `(${flightData.airlineIata})`}</p>
                 )}
               </div>
-              <span className={`flight-status ${getStatusColor(flightData.flightStatus)}`}>
-                {flightData.flightStatus === 'active' && '🟢 Live'}
-                {flightData.flightStatus === 'scheduled' && '🔵 Scheduled'}
-                {flightData.flightStatus === 'landed' && '⚪ Landed'}
-                {flightData.flightStatus === 'cancelled' && '🔴 Cancelled'}
-                {!flightData.flightStatus && '🟢 Live'}
-              </span>
+              <div className="flight-header-actions">
+                <button
+                  className={`favorite-btn ${isFlightSaved(flightData.callsign) ? 'saved' : ''}`}
+                  onClick={toggleSaveFlight}
+                  aria-label={isFlightSaved(flightData.callsign) ? 'Remove from favorites' : 'Add to favorites'}
+                  title={isFlightSaved(flightData.callsign) ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  {isFlightSaved(flightData.callsign) ? '⭐' : '☆'}
+                </button>
+                <span className={`flight-status ${getStatusColor(flightData.flightStatus)}`}>
+                  {flightData.flightStatus === 'active' && '🟢 Live'}
+                  {flightData.flightStatus === 'scheduled' && '🔵 Scheduled'}
+                  {flightData.flightStatus === 'landed' && '⚪ Landed'}
+                  {flightData.flightStatus === 'cancelled' && '🔴 Cancelled'}
+                  {!flightData.flightStatus && '🟢 Live'}
+                </span>
+              </div>
             </div>
 
             {/* Flight Timeline */}

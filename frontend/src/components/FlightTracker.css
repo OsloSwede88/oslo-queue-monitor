@@ -138,6 +138,56 @@
   font-weight: 700;
 }
 
+.flight-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.favorite-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(var(--glass-bg-rgb), 0.3);
+  border: 1px solid var(--glass-border);
+  color: var(--color-text-tertiary);
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 0;
+  line-height: 1;
+}
+
+.favorite-btn:hover {
+  background: rgba(var(--glass-bg-rgb), 0.5);
+  border-color: var(--color-accent);
+  transform: scale(1.1);
+}
+
+.favorite-btn.saved {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.favorite-btn.saved:hover {
+  background: rgba(245, 158, 11, 0.3);
+  transform: scale(1.1);
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+  }
+}
+
 .flight-status {
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;

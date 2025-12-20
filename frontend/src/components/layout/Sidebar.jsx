@@ -1,16 +1,23 @@
 import './Sidebar.css';
 
-function Sidebar({ isOpen, onClose, currentView, onNavigate, theme, onThemeToggle, searchHistory = [], onSearchFromHistory, onClearHistory }) {
+function Sidebar({ isOpen, onClose, currentView, onNavigate, theme, onThemeToggle, searchHistory = [], onSearchFromHistory, onClearHistory, savedFlights = [], onSearchFromSaved, onRemoveSaved }) {
   const handleNavigation = (view) => {
     onNavigate(view);
-    // Auto-close on mobile
-    if (window.innerWidth < 768) {
-      onClose();
-    }
+    // Always close sidebar after navigation
+    onClose();
   };
 
   const handleHistoryClick = (historyItem) => {
     onSearchFromHistory(historyItem);
+  };
+
+  const handleSavedClick = (savedItem) => {
+    onSearchFromSaved(savedItem);
+  };
+
+  const handleRemoveSaved = (e, flightNumber) => {
+    e.stopPropagation(); // Prevent triggering the search
+    onRemoveSaved(flightNumber);
   };
 
   const handleClearHistory = () => {
@@ -67,7 +74,51 @@ function Sidebar({ isOpen, onClose, currentView, onNavigate, theme, onThemeToggl
             <span className="nav-label">Flight Tracker</span>
           </button>
 
+          <button
+            className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
+            onClick={() => handleNavigation('settings')}
+          >
+            <span className="nav-icon">⚙️</span>
+            <span className="nav-label">Settings</span>
+          </button>
+
           <div className="nav-divider"></div>
+
+          {/* Saved/Favorite Flights Section */}
+          {savedFlights && savedFlights.length > 0 && (
+            <>
+              <div className="sidebar-section-header">
+                <span className="section-title">Favorite Flights</span>
+              </div>
+              <div className="saved-flights-list">
+                {savedFlights.map((item) => (
+                  <button
+                    key={`${item.flightNumber}-${item.savedAt}`}
+                    className="saved-flight-item"
+                    onClick={() => handleSavedClick(item)}
+                  >
+                    <div className="saved-flight-header">
+                      <span className="saved-flight-icon">⭐</span>
+                      <span className="saved-flight-number">{item.flightNumber}</span>
+                      <button
+                        className="remove-saved-btn"
+                        onClick={(e) => handleRemoveSaved(e, item.flightNumber)}
+                        aria-label="Remove from favorites"
+                        title="Remove from favorites"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    {item.airline && (
+                      <div className="saved-flight-airline">{item.airline}</div>
+                    )}
+                    <div className="saved-flight-route">{item.route}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="nav-divider"></div>
+            </>
+          )}
 
           {/* Search History Section */}
           {searchHistory && searchHistory.length > 0 && (
