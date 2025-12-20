@@ -25,7 +25,6 @@ function App() {
     return saved ? JSON.parse(saved) : {
       units: 'metric',
       temperatureUnit: 'celsius',
-      autoRefresh: false,
       mapZoom: 8
     };
   });

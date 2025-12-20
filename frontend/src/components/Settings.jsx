@@ -182,24 +182,6 @@ function Settings({ settings, onSettingsChange }) {
           <div className="settings-items">
             <div className="settings-item">
               <div className="settings-item-info">
-                <label htmlFor="autoRefresh">Auto-refresh flight position</label>
-                <p className="settings-item-description">
-                  Automatically update flight position on map every 60 seconds
-                </p>
-              </div>
-              <button
-                className={`settings-toggle ${localSettings.autoRefresh ? 'active' : ''}`}
-                onClick={() => handleChange('autoRefresh', !localSettings.autoRefresh)}
-                aria-pressed={localSettings.autoRefresh}
-              >
-                <div className="toggle-slider"></div>
-              </button>
-            </div>
-
-            <div className="settings-divider"></div>
-
-            <div className="settings-item">
-              <div className="settings-item-info">
                 <label htmlFor="mapZoom">Default zoom level</label>
                 <p className="settings-item-description">
                   Zoom level when centering on a flight (1-15)
