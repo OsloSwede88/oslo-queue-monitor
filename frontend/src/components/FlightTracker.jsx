@@ -320,14 +320,21 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
     }
 
     try {
-      const prompt = `Provide detailed information about the ${aircraftModel || 'aircraft'} ${registration ? `with registration ${registration}` : ''} ${airline ? `operated by ${airline}` : ''}. Include:
-1. Aircraft manufacturer and full model name
-2. Key specifications (passenger capacity, range, cruising speed)
-3. First flight and when it entered service
-4. Interesting facts or notable features
-5. Common routes or operators
-
-Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
+      // Build a directive prompt that prevents generic "which aircraft?" responses
+      let prompt;
+      if (aircraftModel && registration) {
+        // Specific aircraft with registration
+        prompt = `Write a concise ${AI_CONFIG.PROMPT_WORD_TARGET}-word profile about the ${aircraftModel} aircraft with registration ${registration}${airline ? ` operated by ${airline}` : ''}. Include: manufacturer/model, specs (capacity, range, speed), first flight date, and 1-2 interesting facts. Be factual and specific. Do not ask questions.`;
+      } else if (aircraftModel) {
+        // Model known but no registration
+        prompt = `Write a concise ${AI_CONFIG.PROMPT_WORD_TARGET}-word profile about the ${aircraftModel} aircraft${airline ? ` as operated by ${airline}` : ''}. Include: manufacturer/model, specs (capacity, range, speed), when it entered service, and 1-2 interesting facts. Be factual and specific. Do not ask questions.`;
+      } else if (airline) {
+        // Only airline known - describe their typical fleet
+        prompt = `Write a concise ${AI_CONFIG.PROMPT_WORD_TARGET}-word overview of ${airline}'s typical aircraft fleet. Mention their most common aircraft types, fleet size if known, and 1-2 interesting facts about their operations. Be factual and specific. Do not ask questions.`;
+      } else {
+        // Fallback - should rarely happen
+        return null;
+      }
 
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
