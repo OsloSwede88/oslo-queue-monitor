@@ -943,6 +943,30 @@ Showing information about ${airline.name} instead:`);
         </div>
       )}
 
+      {/* Show airline info when flight not found but we have airline data */}
+      {!flightData && (aircraftInfo || loadingAircraftInfo) && (
+        <div className="flight-results">
+          <div className="aircraft-section">
+            <h4 className="aircraft-section-title">✈️ Airline Information</h4>
+
+            {loadingAircraftInfo && !aircraftInfo && (
+              <div className="aircraft-info-loading">
+                <div className="spinner"></div>
+                <p>Generating airline information...</p>
+              </div>
+            )}
+
+            {aircraftInfo && (
+              <div className="aircraft-info">
+                <div className="aircraft-info-content">
+                  {aircraftInfo}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {flightData && (
         <div className="flight-results">
           <div className="flight-card glass glass-card">
