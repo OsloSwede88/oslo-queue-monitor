@@ -400,7 +400,9 @@ Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
       // Europe Major
       'LHR': 'EGLL', // London Heathrow
       'LGW': 'EGKK', // London Gatwick
+      'STN': 'EGSS', // London Stansted
       'CDG': 'LFPG', // Paris Charles de Gaulle
+      'GNB': 'LFLS', // Grenoble Alpes-Isere
       'AMS': 'EHAM', // Amsterdam Schiphol
       'FRA': 'EDDF', // Frankfurt
       'MUC': 'EDDM', // Munich
