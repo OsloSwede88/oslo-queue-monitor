@@ -190,13 +190,11 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
     };
 
     try {
-      // Call Planespotters API directly (supports CORS)
+      const apiBaseUrl = getApiBaseUrl();
+
+      // Call Planespotters API via backend proxy
       if (icao24) {
-        const response = await fetch(`https://api.planespotters.net/pub/photos/hex/${icao24}`, {
-          headers: {
-            'User-Agent': 'Flight-Tracker-App/1.0'
-          }
-        });
+        const response = await fetch(`${apiBaseUrl}/api/aircraft-photo/${icao24}?type=hex`);
         if (response.ok) {
           const data = await response.json();
           if (data.photos && data.photos.length > 0) {
@@ -217,11 +215,7 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
 
       // Fallback to registration search
       if (registration) {
-        const response = await fetch(`https://api.planespotters.net/pub/photos/reg/${registration}`, {
-          headers: {
-            'User-Agent': 'Flight-Tracker-App/1.0'
-          }
-        });
+        const response = await fetch(`${apiBaseUrl}/api/aircraft-photo/${registration}?type=reg`);
         if (response.ok) {
           const data = await response.json();
           if (data.photos && data.photos.length > 0) {
@@ -240,7 +234,7 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
         }
       }
     } catch (err) {
-      // Error fetching aircraft image
+      console.error('[Planespotters] Error fetching aircraft image:', err);
     }
 
     // Fallback 3: Search by aircraft type using Wikimedia Commons
@@ -540,7 +534,8 @@ Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
               if (faResponse.ok) {
                 const faData = await faResponse.json();
                 if (faData.flights && faData.flights.length > 0) {
-                  const faFlight = faData.flights[0];
+                  // Find the first flight with registration data (some flights may have null registration)
+                  const faFlight = faData.flights.find(f => f.registration) || faData.flights[0];
                   if (faFlight.registration) {
                     flightInfo.aircraftRegistration = faFlight.registration;
                   }
