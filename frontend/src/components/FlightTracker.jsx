@@ -12,6 +12,7 @@ import {
 } from '../constants/config';
 import { QUICK_AIRLINES } from '../data/quickAirlines';
 import { icaoToIataMapping } from '../data/airlineCodeMappings';
+import { getApiBaseUrl } from '../utils/apiConfig';
 
 function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSavedFlightsUpdate }) {
   const [flightNumber, setFlightNumber] = useState('');
@@ -531,7 +532,8 @@ Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
           const flightAwareKey = import.meta.env.VITE_FLIGHTAWARE_API_KEY;
           if (flightAwareKey && flightAwareKey !== API_DEFAULTS.PLACEHOLDER_FLIGHTAWARE) {
             try {
-              const faResponse = await fetch(`/api/flightaware/${flightNumber.toUpperCase()}`);
+              const apiBaseUrl = getApiBaseUrl();
+              const faResponse = await fetch(`${apiBaseUrl}/api/flightaware/${flightNumber.toUpperCase()}`);
 
               if (faResponse.ok) {
                 const faData = await faResponse.json();
@@ -562,7 +564,8 @@ Keep it concise but informative, around ${AI_CONFIG.PROMPT_WORD_TARGET}.`;
                 // Try searching by flight number pattern (e.g., SK4035 → SAS4035)
                 const begin = Math.floor(Date.now() / 1000) - 86400;
                 const end = Math.floor(Date.now() / 1000);
-                const osResponse = await fetch(`/api/opensky/flights?begin=${begin}&end=${end}`);
+                const apiBaseUrl = getApiBaseUrl();
+                const osResponse = await fetch(`${apiBaseUrl}/api/opensky/flights?begin=${begin}&end=${end}`);
 
                 if (osResponse.ok) {
                   const osData = await osResponse.json();
