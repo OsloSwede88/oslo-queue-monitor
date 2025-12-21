@@ -694,7 +694,30 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
             setLoadingAircraftImage(false);
           });
       } else {
-        setError(`No flight found for ${flightNumber}. Try flight numbers like LH400, BA117, SK4035, DY1302.`);
+        // Flight not found - but show helpful info about the airline
+        const airlineCode = flightNumber.match(/^[A-Z]{2}/)?.[0];
+        const airline = QUICK_AIRLINES.find(a => a.code === airlineCode);
+
+        if (airline) {
+          // Show airline info even if flight not found
+          setError(`No active flight found for ${flightNumber}. This could mean:
+• The flight is not currently active or scheduled for today
+• The flight has already landed
+• The flight number may be incorrect
+
+Showing information about ${airline.name} instead:`);
+
+          // Generate AI info about the airline
+          setLoadingAircraftInfo(true);
+          generateAircraftInfo(null, null, airline.name)
+            .then(info => {
+              setAircraftInfo(info);
+              setLoadingAircraftInfo(false);
+            })
+            .catch(() => setLoadingAircraftInfo(false));
+        } else {
+          setError(`No flight found for ${flightNumber}. Try flight numbers like LH400, BA117, SK4035, DY1302.`);
+        }
       }
     } catch (err) {
       setError(`Unable to fetch flight data: ${err.message}. Please check your API key or try again later.`);
