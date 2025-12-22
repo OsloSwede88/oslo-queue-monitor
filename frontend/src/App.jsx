@@ -4,6 +4,7 @@ import Layout from './components/layout/Layout';
 import FlightTracker from './components/FlightTracker';
 import Settings from './components/Settings';
 import { STORAGE_KEYS, THEMES } from './constants/config';
+import { trackThemeToggle, trackNavigation } from './utils/analytics';
 
 function App() {
   const [currentView, setCurrentView] = useState('flights');
@@ -37,7 +38,11 @@ function App() {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === THEMES.DARK ? THEMES.LIGHT : THEMES.DARK);
+    setTheme(prevTheme => {
+      const newTheme = prevTheme === THEMES.DARK ? THEMES.LIGHT : THEMES.DARK;
+      trackThemeToggle(newTheme);
+      return newTheme;
+    });
   };
 
   const handleSearchHistoryUpdate = (newHistory) => {
@@ -74,11 +79,16 @@ function App() {
     localStorage.setItem(STORAGE_KEYS.APP_SETTINGS, JSON.stringify(newSettings));
   };
 
+  const handleNavigate = (view) => {
+    trackNavigation(view);
+    setCurrentView(view);
+  };
+
   return (
     <div className="app">
       <Layout
         currentView={currentView}
-        onNavigate={setCurrentView}
+        onNavigate={handleNavigate}
         theme={theme}
         onThemeToggle={toggleTheme}
         searchHistory={searchHistory}

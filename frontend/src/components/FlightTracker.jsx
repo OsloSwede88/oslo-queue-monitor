@@ -13,6 +13,7 @@ import {
 import { QUICK_AIRLINES } from '../data/quickAirlines';
 import { icaoToIataMapping } from '../data/airlineCodeMappings';
 import { getApiBaseUrl } from '../utils/apiConfig';
+import { trackFlightSearch, trackFlightView, trackQuickAirlineClick, trackSaveFlight, trackSearchFromHistory } from '../utils/analytics';
 
 function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSavedFlightsUpdate }) {
   const [flightNumber, setFlightNumber] = useState('');
@@ -76,6 +77,9 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
       const newSaved = [savedFlight, ...savedFlights];
       setSavedFlights(newSaved);
       localStorage.setItem(STORAGE_KEYS.SAVED_FLIGHTS, JSON.stringify(newSaved));
+
+      // Track save flight
+      trackSaveFlight(flightData.callsign);
     }
   };
 
@@ -451,6 +455,9 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
       return;
     }
 
+    // Track flight search
+    trackFlightSearch(flightNumber.trim().toUpperCase());
+
     setLoading(true);
     setError(null);
     setFlightData(null);
@@ -631,6 +638,9 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
 
         setFlightData(flightInfo);
 
+        // Track flight view
+        trackFlightView(flightInfo.callsign, flightInfo.airline);
+
         // Save to search history
         saveToSearchHistory(flightInfo);
 
@@ -729,6 +739,9 @@ Showing information about ${airline.name} instead:`);
   // Handle search from history trigger
   useEffect(() => {
     if (searchFromHistoryTrigger) {
+      // Track search from history
+      trackSearchFromHistory(searchFromHistoryTrigger.flightNumber);
+
       setFlightNumber(searchFromHistoryTrigger.flightNumber);
       setFlightDate(searchFromHistoryTrigger.date || '');
       shouldAutoSearch.current = true;
@@ -817,6 +830,10 @@ Showing information about ${airline.name} instead:`);
   };
 
   const selectAirline = (airline) => {
+    // Track quick airline click
+    if (selectedAirline !== airline) {
+      trackQuickAirlineClick(airline.name);
+    }
     setSelectedAirline(selectedAirline === airline ? null : airline);
   };
 
