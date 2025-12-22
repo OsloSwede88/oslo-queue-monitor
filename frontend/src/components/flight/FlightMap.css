@@ -103,8 +103,61 @@
 }
 
 /* Only show our aircraft icon */
-.leaflet-marker-pane .aircraft-icon {
+.leaflet-marker-pane .aircraft-icon,
+.leaflet-marker-pane .airport-icon {
   display: block !important;
+}
+
+/* Airport marker styling */
+.airport-icon,
+.airport-icon.leaflet-div-icon,
+.leaflet-marker-icon.airport-icon {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.airport-marker {
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.airport-marker:hover {
+  transform: scale(1.3);
+}
+
+/* Airport popup styling */
+.airport-popup .leaflet-popup-content-wrapper {
+  background: rgba(30, 30, 58, 0.95);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  padding: 0;
+  color: var(--text-primary, #E0E0E0);
+}
+
+.airport-popup .leaflet-popup-tip {
+  background: rgba(30, 30, 58, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.airport-popup-content {
+  padding: 12px;
+}
+
+[data-theme="light"] .airport-popup .leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text-primary, #2C2C2C);
+}
+
+[data-theme="light"] .airport-popup .leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .aircraft-marker {

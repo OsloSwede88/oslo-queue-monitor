@@ -199,6 +199,27 @@ function FlightsLayer({ onFlightsUpdate, onStatusUpdate, searchFlightNumber, fli
   return null;
 }
 
+// Create custom airport icon
+function createAirportIcon() {
+  const iconHtml = `
+    <div class="airport-marker">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" fill="#6366f1" opacity="0.2"/>
+        <circle cx="12" cy="12" r="6" fill="#6366f1" opacity="0.4"/>
+        <circle cx="12" cy="12" r="3" fill="#6366f1"/>
+      </svg>
+    </div>
+  `;
+
+  return L.divIcon({
+    html: iconHtml,
+    className: 'airport-icon leaflet-div-icon',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10]
+  });
+}
+
 // Create custom aircraft icon that rotates based on heading - Simple solid silhouette
 function createAircraftIcon(heading, altitude, isLastKnown = false) {
   const iconColor = isLastKnown ? AIRCRAFT_ICON.GROUNDED_COLOR : AIRCRAFT_ICON.DEFAULT_COLOR;
@@ -234,12 +255,20 @@ function FlightMap({ onFlightSelect, searchFlightNumber, flightData }) {
   const [flights, setFlights] = useState([]);
   const [selectedFlight, setSelectedFlight] = useState(null);
   const [status, setStatus] = useState(null);
+  const [showAirports, setShowAirports] = useState(true);
 
   const handleFlightClick = (flight) => {
     setSelectedFlight(flight);
     if (onFlightSelect) {
       onFlightSelect(flight);
     }
+  };
+
+  // Get list of major airports to display (all airports would be too many)
+  const getMajorAirports = () => {
+    const airportList = Object.entries(AIRPORT_COORDS);
+    // Show all airports when zoomed in, limit to major ones when zoomed out
+    return airportList;
   };
 
   const formatSpeed = (speed) => {
@@ -287,6 +316,30 @@ function FlightMap({ onFlightSelect, searchFlightNumber, flightData }) {
           flightData={flightData}
         />
 
+        {/* Airport markers */}
+        {showAirports && getMajorAirports().map(([code, airport]) => (
+          <Marker
+            key={`airport-${code}`}
+            position={[airport.lat, airport.lon]}
+            icon={createAirportIcon()}
+          >
+            <Popup className="airport-popup">
+              <div className="airport-popup-content">
+                <h3 style={{ margin: 0, marginBottom: '0.5rem', fontSize: '1rem', fontWeight: '600' }}>
+                  {airport.name}
+                </h3>
+                <div style={{ fontSize: '0.875rem', opacity: 0.7 }}>
+                  <div>IATA: {code}</div>
+                  <div>
+                    {airport.lat.toFixed(4)}°, {airport.lon.toFixed(4)}°
+                  </div>
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* Flight markers */}
         {flights.map((flight) => {
           const icon = createAircraftIcon(flight.track || 0, flight.alt || 0, flight.isLastKnown);
           return (
