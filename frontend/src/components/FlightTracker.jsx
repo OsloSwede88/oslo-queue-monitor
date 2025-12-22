@@ -22,6 +22,8 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
   const [flightData, setFlightData] = useState(null);
   const [weatherData, setWeatherData] = useState({ departure: null, arrival: null });
   const [error, setError] = useState(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [aircraftInfo, setAircraftInfo] = useState(null);
   const [aircraftImage, setAircraftImage] = useState(null);
   const [loadingAircraftInfo, setLoadingAircraftInfo] = useState(false);
@@ -638,6 +640,15 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
 
         setFlightData(flightInfo);
 
+        // Trigger transition animation if this is the first search
+        if (!hasSearched) {
+          setIsTransitioning(true);
+          setTimeout(() => {
+            setHasSearched(true);
+            setIsTransitioning(false);
+          }, 600); // Match CSS animation duration
+        }
+
         // Track flight view
         trackFlightView(flightInfo.callsign, flightInfo.airline);
 
@@ -869,12 +880,101 @@ Showing information about ${airline.name} instead:`);
   return (
     <div className="flight-tracker">
       <div className="container">
-        <div className="flight-tracker-header">
-          <h2>✈️ Flight Tracker</h2>
-          <p>Track any flight in real-time</p>
-        </div>
+        {/* Hero search layout - shown before first search */}
+        {!hasSearched ? (
+          <div className={`hero-search-container ${isTransitioning ? 'hero-exit' : ''}`}>
+            <div className="hero-search-content">
+              <div className="hero-header">
+                <h1 className="hero-title">✈️ Flight Tracker</h1>
+                <p className="hero-subtitle">Track any flight in real-time worldwide</p>
+              </div>
 
-        <div className="flight-search glass glass-card" ref={quickSearchRef}>
+              <div className="hero-search-card glass glass-card" ref={quickSearchRef}>
+                <div className="search-inputs">
+                  <input
+                    type="text"
+                    className="flight-input"
+                    placeholder="Flight number (e.g., SK4035)"
+                    value={flightNumber}
+                    onChange={(e) => setFlightNumber(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                  />
+                  <button
+                    className="quick-search-toggle"
+                    onClick={toggleQuickSearch}
+                    type="button"
+                    title="Quick access to popular flights"
+                  >
+                    <span className="quick-search-icon">⚡</span>
+                    <span className="quick-search-label">Quick Search</span>
+                  </button>
+                  <input
+                    type="date"
+                    className="flight-input"
+                    value={flightDate}
+                    onChange={(e) => setFlightDate(e.target.value)}
+                    max={new Date().toISOString().split('T')[0]}
+                    lang="en-US"
+                  />
+                </div>
+
+                {/* Quick Search Dropdown */}
+                {quickSearchOpen && (
+                  <div className="quick-search-dropdown glass">
+                    {QUICK_AIRLINES.map((airline) => (
+                      <div key={airline.code} className="quick-airline">
+                        <button
+                          className={`quick-airline-btn ${selectedAirline === airline.code ? 'active' : ''}`}
+                          onClick={() => selectAirline(airline.code)}
+                        >
+                          <img src={airline.logo} alt={airline.name} className="airline-logo" />
+                          <span>{airline.name}</span>
+                          <span className="expand-arrow">{selectedAirline === airline.code ? '▲' : '▼'}</span>
+                        </button>
+                        {selectedAirline === airline.code && (
+                          <div className="quick-flights">
+                            {airline.flights.map((flight) => (
+                              <button
+                                key={flight}
+                                className="quick-flight-btn"
+                                onClick={() => selectFlight(flight)}
+                              >
+                                {flight}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  className="btn btn-primary search-btn hero-search-btn"
+                  onClick={searchFlight}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <div className="spinner-small"></div>
+                      Searching...
+                    </>
+                  ) : (
+                    '🔍 Track Flight'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Compact search layout - shown after first search */
+          <div className="results-container results-enter">
+            <div className="flight-tracker-header">
+              <h2>✈️ Flight Tracker</h2>
+              <p>Track any flight in real-time</p>
+            </div>
+
+            <div className="flight-search glass glass-card" ref={quickSearchRef}>
           <div className="search-inputs">
             <input
               type="text"
@@ -950,7 +1050,7 @@ Showing information about ${airline.name} instead:`);
           </button>
         </div>
 
-        {/* Live Flight Map */}
+        {/* Live Flight Map - Only show after a search has been performed */}
         <FlightMap
           onFlightSelect={handleFlightSelectFromMap}
           searchFlightNumber={flightData?.flight_iata || flightData?.flight_icao || (flightData ? flightNumber : null)}
@@ -1352,6 +1452,8 @@ Showing information about ${airline.name} instead:`);
             </div>
         </div>
       )}
+          </div>
+        )}
       </div>
     </div>
   );
