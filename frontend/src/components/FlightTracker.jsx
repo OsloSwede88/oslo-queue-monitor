@@ -13,7 +13,7 @@ import {
 import { QUICK_AIRLINES } from '../data/quickAirlines';
 import { icaoToIataMapping } from '../data/airlineCodeMappings';
 import { getApiBaseUrl } from '../utils/apiConfig';
-import { trackFlightSearch, trackFlightView, trackSaveFlight, trackSearchFromHistory } from '../utils/analytics';
+import { trackFlightSearch, trackFlightView, trackQuickAirlineClick, trackSaveFlight, trackSearchFromHistory } from '../utils/analytics';
 
 function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSavedFlightsUpdate }) {
   const [flightNumber, setFlightNumber] = useState('');
@@ -26,6 +26,11 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
   const [aircraftImage, setAircraftImage] = useState(null);
   const [loadingAircraftInfo, setLoadingAircraftInfo] = useState(false);
   const [loadingAircraftImage, setLoadingAircraftImage] = useState(false);
+
+  // Quick Search dropdown state
+  const [quickSearchOpen, setQuickSearchOpen] = useState(false);
+  const [selectedAirline, setSelectedAirline] = useState(null);
+  const quickSearchRef = useRef(null);
 
   // Note: Real-time flight monitoring removed (backend deprecated)
 
@@ -818,6 +823,49 @@ Showing information about ${airline.name} instead:`);
     }, TIMING.AUTO_SEARCH_DELAY);
   };
 
+  // Quick Search handlers
+  const toggleQuickSearch = () => {
+    setQuickSearchOpen(!quickSearchOpen);
+    setSelectedAirline(null);
+  };
+
+  const selectAirline = (airlineCode) => {
+    // Track quick airline click
+    if (selectedAirline !== airlineCode) {
+      const airline = QUICK_AIRLINES.find(a => a.code === airlineCode);
+      if (airline) {
+        trackQuickAirlineClick(airline.name);
+      }
+    }
+    setSelectedAirline(selectedAirline === airlineCode ? null : airlineCode);
+  };
+
+  const selectFlight = (flightNumber) => {
+    setFlightDate('');
+    setQuickSearchOpen(false);
+    setSelectedAirline(null);
+    shouldAutoSearch.current = true;
+    setFlightNumber(flightNumber);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (quickSearchRef.current && !quickSearchRef.current.contains(event.target)) {
+        setQuickSearchOpen(false);
+        setSelectedAirline(null);
+      }
+    };
+
+    if (quickSearchOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [quickSearchOpen]);
+
   return (
     <div className="flight-tracker">
       <div className="container">
@@ -826,7 +874,7 @@ Showing information about ${airline.name} instead:`);
           <p>Track any flight in real-time</p>
         </div>
 
-        <div className="flight-search glass glass-card">
+        <div className="flight-search glass glass-card" ref={quickSearchRef}>
           <div className="search-inputs">
             <input
               type="text"
@@ -836,6 +884,15 @@ Showing information about ${airline.name} instead:`);
               onChange={(e) => setFlightNumber(e.target.value)}
               onKeyPress={handleKeyPress}
             />
+            <button
+              className="quick-search-toggle"
+              onClick={toggleQuickSearch}
+              type="button"
+              title="Quick access to popular flights"
+            >
+              <span className="quick-search-icon">⚡</span>
+              <span className="quick-search-label">Quick Search</span>
+            </button>
             <input
               type="date"
               className="flight-input"
@@ -845,6 +902,37 @@ Showing information about ${airline.name} instead:`);
               lang="en-US"
             />
           </div>
+
+          {/* Quick Search Dropdown - Positioned below search inputs */}
+          {quickSearchOpen && (
+            <div className="quick-search-dropdown glass">
+              {QUICK_AIRLINES.map((airline) => (
+                <div key={airline.code} className="quick-airline">
+                  <button
+                    className={`quick-airline-btn ${selectedAirline === airline.code ? 'active' : ''}`}
+                    onClick={() => selectAirline(airline.code)}
+                  >
+                    <img src={airline.logo} alt={airline.name} className="airline-logo" />
+                    <span>{airline.name}</span>
+                    <span className="expand-arrow">{selectedAirline === airline.code ? '▲' : '▼'}</span>
+                  </button>
+                  {selectedAirline === airline.code && (
+                    <div className="quick-flights">
+                      {airline.flights.map((flight) => (
+                        <button
+                          key={flight}
+                          className="quick-flight-btn"
+                          onClick={() => selectFlight(flight)}
+                        >
+                          {flight}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
           <button
             className="btn btn-primary search-btn"
