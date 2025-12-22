@@ -469,6 +469,15 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
     setLoadingAircraftImage(false);
     setLoadingAircraftInfo(false);
 
+    // Trigger transition animation if this is the first search
+    if (!hasSearched) {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setHasSearched(true);
+        setIsTransitioning(false);
+      }, 600); // Match CSS animation duration
+    }
+
     try {
       const apiKey = import.meta.env.VITE_AIRLABS_API_KEY;
 
@@ -639,15 +648,6 @@ function FlightTracker({ onSearchHistoryUpdate, searchFromHistoryTrigger, onSave
         }
 
         setFlightData(flightInfo);
-
-        // Trigger transition animation if this is the first search
-        if (!hasSearched) {
-          setIsTransitioning(true);
-          setTimeout(() => {
-            setHasSearched(true);
-            setIsTransitioning(false);
-          }, 600); // Match CSS animation duration
-        }
 
         // Track flight view
         trackFlightView(flightInfo.callsign, flightInfo.airline);
